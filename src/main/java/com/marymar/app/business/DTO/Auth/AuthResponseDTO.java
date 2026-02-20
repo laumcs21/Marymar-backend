@@ -14,11 +14,15 @@ public class AuthResponseDTO {
         private String nombre;
         private Rol rol;
         private String mensaje;
+        private boolean requires2FA;
 
-    public AuthResponseDTO(String nombre, Rol rol, String token) {
+
+    public AuthResponseDTO(String nombre, Rol rol, String token, boolean requires2FA) {
         this.nombre = nombre;
         this.rol = rol;
         this.token = token;
+        this.requires2FA = requires2FA;
+
     }
 
     public AuthResponseDTO(String mensaje) {
@@ -58,5 +62,9 @@ public class AuthResponseDTO {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public boolean isRequires2FA() {
+        return requires2FA;
     }
 }

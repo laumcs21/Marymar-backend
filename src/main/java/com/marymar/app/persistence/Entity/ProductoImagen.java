@@ -15,7 +15,7 @@ public class ProductoImagen {
     private String url;
 
     @Column(nullable = false)
-    private String publicId; // Para eliminar en Cloudinary
+    private String publicId;
 
     @Column(nullable = false)
     private int orden;

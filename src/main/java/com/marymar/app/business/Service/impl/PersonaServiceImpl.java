@@ -4,13 +4,16 @@ import com.marymar.app.business.DTO.PersonaCreateDTO;
 import com.marymar.app.business.DTO.PersonaResponseDTO;
 import com.marymar.app.business.Service.PersonaService;
 import com.marymar.app.persistence.DAO.PersonaDAO;
+import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Entity.Rol;
+import com.marymar.app.persistence.Repository.PersonaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Service
@@ -18,11 +21,13 @@ public class PersonaServiceImpl implements PersonaService {
 
     private final PersonaDAO personaDAO;
     private final PasswordEncoder passwordEncoder;
+    private final PersonaRepository personaRepository;
 
     public PersonaServiceImpl(PersonaDAO personaDAO,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder, PersonaRepository personaRepository) {
         this.personaDAO = personaDAO;
         this.passwordEncoder = passwordEncoder;
+        this.personaRepository = personaRepository;
     }
 
     // =========================
@@ -92,6 +97,37 @@ public class PersonaServiceImpl implements PersonaService {
     }
 
     // =========================
+    // Login google
+    // =========================
+    @Override
+    public Persona buscarOCrearUsuarioGoogle(String email, String nombre) {
+
+        Optional<Persona> personaOpt = personaRepository.findByEmail(email);
+
+        if (personaOpt.isPresent()) {
+
+            Persona existente = personaOpt.get();
+
+            if (!existente.isActivo()) {
+                throw new RuntimeException("Usuario desactivado.");
+            }
+
+            return existente;
+        }
+
+        Persona nuevaPersona = Persona.builder()
+                .numeroIdentificacion("GOOGLE-" + System.currentTimeMillis())
+                .nombre(nombre)
+                .email(email)
+                .contrasena("GOOGLE_USER")
+                .rol(Rol.CLIENTE)
+                .activo(true)
+                .build();
+
+        return personaRepository.save(nuevaPersona);
+    }
+
+    // =========================
     // VALIDACIONES
     // =========================
     private void validarPersona(PersonaCreateDTO dto, boolean esNuevo) {
@@ -109,7 +145,6 @@ public class PersonaServiceImpl implements PersonaService {
             throw new IllegalArgumentException("El correo electrónico no es válido");
         }
 
-        // 🔥 CORRECCIÓN 1: Validación de email también en actualización
         if (esNuevo) {
             if (personaDAO.existeEmail(dto.getEmail())) {
                 throw new IllegalArgumentException("El correo ya está registrado");
@@ -121,7 +156,6 @@ public class PersonaServiceImpl implements PersonaService {
             }
         }
 
-        // Validación contraseña
         if (esNuevo) {
             if (!esContrasenaValida(dto.getContrasena())) {
                 throw new IllegalArgumentException(
@@ -148,7 +182,6 @@ public class PersonaServiceImpl implements PersonaService {
             throw new IllegalArgumentException("El rol es obligatorio");
         }
 
-        // 🔥 CORRECCIÓN 2: Manejo seguro de Rol.valueOf()
         Rol rol;
         try {
             rol = Rol.valueOf(dto.getRol().toUpperCase());
