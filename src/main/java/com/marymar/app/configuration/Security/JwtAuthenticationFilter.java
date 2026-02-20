@@ -36,7 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
-        // 🔎 1. Si no hay token, continúa
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -46,15 +45,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
 
-            // 🔐 2. Extraemos email del token
             final String userEmail = jwtService.extractUsername(jwt);
 
-            // 3. Si no hay autenticación previa en contexto
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
-                // 4. Validamos token
                 if (jwtService.isTokenValid(jwt, userDetails)) {
 
                     UsernamePasswordAuthenticationToken authToken =
@@ -79,5 +75,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        return path.startsWith("/api/auth/");
     }
 }

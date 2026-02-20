@@ -13,5 +13,6 @@ public interface AuthService {
 
         PersonaResponseDTO verifyToken(String token);
 
+        AuthResponseDTO validarCodigo(String email, String code);
 }
 

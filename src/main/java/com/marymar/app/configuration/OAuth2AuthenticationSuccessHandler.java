@@ -1,5 +1,5 @@
 package com.marymar.app.configuration;
-
+/**
 import com.marymar.app.business.Service.PersonaService;
 import com.marymar.app.configuration.Security.JwtService;
 import com.marymar.app.persistence.Entity.Persona;
@@ -43,3 +43,4 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         response.getWriter().flush();    }
 }
 
+*/
