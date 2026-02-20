@@ -23,10 +23,10 @@ public class EmailServiceImpl implements EmailService {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setFrom(from);
         msg.setTo(to);
-        msg.setSubject("Recuperación de contraseña");
+        msg.setSubject("Verificación en dos pasos");
         msg.setText(
                 "Hola,\n\n" +
-                        "Tu código de recuperación es: " + code + "\n" +
+                        "Tu código de inicio de sesión es: " + code + "\n" +
                         "Caduca en 10 minutos.\n\n" +
                         "Si no fuiste tú, ignora este correo."
         );

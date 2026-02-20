@@ -25,6 +25,12 @@ public class AuthResponseDTO {
 
     }
 
+    public AuthResponseDTO(String nombre, Rol rol, String token) {
+        this.nombre = nombre;
+        this.rol = rol;
+        this.token = token;
+    }
+
     public AuthResponseDTO(String mensaje) {
         this.mensaje = mensaje;
     }

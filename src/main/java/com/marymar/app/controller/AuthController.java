@@ -49,6 +49,17 @@ public class AuthController {
     }
 
     // ============================
+    // VALIDAR CÓDIGO
+    // ============================
+    @PostMapping("/validate-code")
+    public ResponseEntity<AuthResponseDTO> validarCodigo(
+            @RequestParam String email,
+            @RequestParam String code
+    ) {
+        return ResponseEntity.ok(authService.validarCodigo(email, code));
+    }
+
+    // ============================
     // VERIFY TOKEN (para JWT luego)
     // ============================
 
