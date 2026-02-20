@@ -1,6 +1,6 @@
 package com.marymar.app.business.Service.impl;
-/**
-import com.Rently.Business.Service.ImageService;
+
+import com.marymar.app.business.Service.ImageService;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +12,16 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class CloudinaryImageServiceImpl implements ImageService {
 
     private final Cloudinary cloudinary;
 
-    @Value("${cloudinary.base-folder:rently}")
+    @Value("${cloudinary.base-folder:marymar}")
     private String baseFolder;
+
+    public CloudinaryImageServiceImpl(Cloudinary cloudinary) {
+        this.cloudinary = cloudinary;
+    }
 
     @Override
     public Upload uploadImage(MultipartFile file, String folder, String publicIdHint) throws Exception {
@@ -69,4 +72,3 @@ public class CloudinaryImageServiceImpl implements ImageService {
         }
     }
 }
-*/
