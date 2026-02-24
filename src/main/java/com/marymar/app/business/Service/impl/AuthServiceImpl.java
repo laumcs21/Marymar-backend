@@ -14,6 +14,9 @@ import com.marymar.app.persistence.Entity.Rol;
 import com.marymar.app.persistence.Repository.PersonaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -24,14 +27,17 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final GeneradorCodigo generadorCodigo;
+    private final AuthenticationManager authenticationManager;
 
-    public AuthServiceImpl(PersonaRepository personaRepository, PersonaDAO personaDAO, PersonaService personaService, PasswordEncoder passwordEncoder, JwtService jwtService, GeneradorCodigo generadorCodigo) {
+
+    public AuthServiceImpl(PersonaRepository personaRepository, PersonaDAO personaDAO, PersonaService personaService, PasswordEncoder passwordEncoder, JwtService jwtService, GeneradorCodigo generadorCodigo, AuthenticationManager authenticationManager) {
         this.personaRepository = personaRepository;
         this.personaService = personaService;
         this.personaDAO = personaDAO;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.generadorCodigo = generadorCodigo;
+        this.authenticationManager = authenticationManager;
     }
 
     @Override
@@ -68,12 +74,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
 
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getContrasena()
+                )
+        );
+
         Persona persona = personaRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        if (!passwordEncoder.matches(request.getContrasena(), persona.getContrasena())) {
-            throw new RuntimeException("Credenciales incorrectas");
-        }
 
         generadorCodigo.generarCodigo(persona.getEmail());
 
@@ -111,6 +120,22 @@ public class AuthServiceImpl implements AuthService {
                 persona.getRol(),
                 token,
                 false
+        );
+    }
+
+    @Override
+    public AuthResponseDTO reenviarCodigo(String email) {
+
+        Persona persona = personaRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        generadorCodigo.generarCodigo(email);
+
+        return new AuthResponseDTO(
+                persona.getNombre(),
+                persona.getRol(),
+                null,
+                true
         );
     }
 

@@ -2,29 +2,43 @@ package com.marymar.app.business.Service.impl;
 
 import com.marymar.app.business.Service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import sibApi.TransactionalEmailsApi;
+import sendinblue.ApiClient;
+import sendinblue.Configuration;
+import sendinblue.auth.ApiKeyAuth;
+import sibApi.TransactionalEmailsApi;
+import sibModel.*;import sibModel.*;
+
+import java.util.Collections;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${brevo.api.key}")
+    private String apiKey;
 
     @Value("${app.mail.from}")
     private String from;
 
-    public EmailServiceImpl(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
-
     @Override
     public void send(String to, String code) {
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setFrom(from);
-        msg.setTo(to);
-        msg.setSubject("Verificación en dos pasos");
-        msg.setText(
+
+        Configuration.getDefaultApiClient().setApiKey(apiKey);
+
+        TransactionalEmailsApi api = new TransactionalEmailsApi();
+
+        SendSmtpEmailSender sender = new SendSmtpEmailSender();
+        sender.setEmail(from);
+        sender.setName("MaryMar");
+
+        SendSmtpEmail email = new SendSmtpEmail();
+        email.setSender(sender);
+        email.setTo(Collections.singletonList(
+                new SendSmtpEmailTo().email(to)
+        ));
+        email.setSubject("Verificación en dos pasos");
+        email.setTextContent(
                 "Hola,\n\n" +
                         "Tu código de inicio de sesión es: " + code + "\n" +
                         "Caduca en 10 minutos.\n\n" +
@@ -32,8 +46,8 @@ public class EmailServiceImpl implements EmailService {
         );
 
         try {
-            System.out.println("[MAIL] Enviando a " + to + " con code=" + code);
-            mailSender.send(msg);
+            api.sendTransacEmail(email);
+            System.out.println("[MAIL] Correo enviado correctamente a " + to);
         } catch (Exception e) {
             System.err.println("[MAIL] Error enviando correo: " + e.getMessage());
             e.printStackTrace();
