@@ -12,7 +12,7 @@ public class Persona {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_identificacion", unique = true, nullable = false)
+    @Column(name = "numero_identificacion", unique = true, nullable = true)
     private String numeroIdentificacion;
 
     private String nombre;

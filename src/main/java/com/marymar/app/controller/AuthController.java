@@ -3,7 +3,6 @@ package com.marymar.app.controller;
 import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
 import com.marymar.app.business.Service.AuthService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -83,5 +82,15 @@ public class AuthController {
             return ResponseEntity.status(401)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @PostMapping("/resend-code")
+    public ResponseEntity<?> resendCode(@RequestBody Map<String, String> body) {
+
+        String email = body.get("email");
+
+        AuthResponseDTO response = authService.reenviarCodigo(email);
+
+        return ResponseEntity.ok(response);
     }
 }
