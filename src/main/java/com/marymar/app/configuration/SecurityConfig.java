@@ -20,12 +20,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 import java.util.Collections;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final PersonaRepository personaRepository;
@@ -104,14 +106,27 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/validate-code").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-token").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/resend-code").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**", "/error").permitAll()
                         .anyRequest().authenticated()
+                )
+
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"message\":\"Unauthorized - token missing or invalid\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"message\":\"Forbidden - insufficient permissions\"}");
+                        })
                 )
 
                 .oauth2Login(oauth -> oauth
                         .loginPage("/oauth2/authorization/google")
                         .successHandler(oAuth2SuccessHandler)
-
                         .failureHandler((request, response, exception) -> {
                             exception.printStackTrace();
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "OAuth Failed");
