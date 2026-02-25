@@ -114,6 +114,8 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         String token = jwtService.generateToken(persona);
+        System.out.println ("Email: " + email);
+        System.out.println ("code: " + code);
 
         return new AuthResponseDTO(
                 persona.getNombre(),

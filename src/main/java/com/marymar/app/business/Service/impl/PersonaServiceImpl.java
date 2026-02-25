@@ -36,7 +36,7 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public PersonaResponseDTO crear(PersonaCreateDTO dto) {
 
-        validarPersona(dto, true);
+        validarPersona(dto, true, null);
 
         dto.setContrasena(
                 passwordEncoder.encode(dto.getContrasena())
@@ -69,12 +69,14 @@ public class PersonaServiceImpl implements PersonaService {
     @Override
     public PersonaResponseDTO actualizar(Long id, PersonaCreateDTO dto) {
 
-        validarPersona(dto, false);
+        validarPersona(dto, false, id);
 
-        if (dto.getContrasena() != null) {
+        if (dto.getContrasena() != null && !dto.getContrasena().isBlank()) {
             dto.setContrasena(
                     passwordEncoder.encode(dto.getContrasena())
             );
+        } else {
+            dto.setContrasena(null); // No actualizar contraseña si viene vacía
         }
 
         return personaDAO.actualizar(id, dto);
@@ -130,7 +132,7 @@ public class PersonaServiceImpl implements PersonaService {
     // =========================
     // VALIDACIONES
     // =========================
-    private void validarPersona(PersonaCreateDTO dto, boolean esNuevo) {
+    private void validarPersona(PersonaCreateDTO dto, boolean esNuevo, Long idActual) {
 
         if (dto.getNumeroIdentificacion() == null ||
                 dto.getNumeroIdentificacion().isBlank()) {
@@ -151,7 +153,7 @@ public class PersonaServiceImpl implements PersonaService {
             }
         } else {
             if (dto.getEmail() != null &&
-                    personaDAO.existeEmail(dto.getEmail())) {
+                    personaDAO.existeEmailEnOtroUsuario(dto.getEmail(), idActual)) {
                 throw new IllegalArgumentException("El correo ya está registrado");
             }
         }
@@ -225,4 +227,5 @@ public class PersonaServiceImpl implements PersonaService {
     private int calcularEdad(LocalDate fechaNacimiento) {
         return Period.between(fechaNacimiento, LocalDate.now()).getYears();
     }
+
 }

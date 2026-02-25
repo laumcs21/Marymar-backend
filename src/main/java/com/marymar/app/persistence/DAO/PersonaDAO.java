@@ -121,6 +121,9 @@ public class PersonaDAO {
         return repository.findByEmail(email).isPresent();
     }
 
+    public boolean existeEmailEnOtroUsuario(String email, Long idActual) {
+        return repository.existsByEmailAndIdNot(email, idActual);
+    }
 
 }
 
