@@ -33,5 +33,6 @@ public interface ImageService {
         public String getFormat() {
             return format;
         }
+
     }
 }

@@ -4,7 +4,11 @@ import com.marymar.app.business.DTO.ProductoCreateDTO;
 import com.marymar.app.business.DTO.ProductoResponseDTO;
 import com.marymar.app.persistence.Entity.Categoria;
 import com.marymar.app.persistence.Entity.Producto;
+import com.marymar.app.persistence.Entity.ProductoImagen;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ProductoMapper {
@@ -21,7 +25,8 @@ public class ProductoMapper {
         return new Producto(
                 dto.getNombre(),
                 dto.getPrecio(),
-                categoria
+                categoria,
+                dto.getDescripcion()
         );
     }
 
@@ -29,17 +34,25 @@ public class ProductoMapper {
     // Entity → ResponseDTO
     // =========================
     public ProductoResponseDTO toDTO(Producto producto) {
+        if (producto == null) return null;
 
-        if (producto == null) {
-            return null;
-        }
+        List<String> urls = producto.getImagenes() == null ? List.of() :
+                producto.getImagenes().stream()
+                        .map(ProductoImagen::getUrl)
+                        .collect(Collectors.toList());
+
+        String principal = urls.isEmpty() ? null : urls.get(0);
 
         return new ProductoResponseDTO(
                 producto.getId(),
                 producto.getNombre(),
                 producto.getPrecio(),
+                producto.getDescripcion(),
+                producto.getCategoria() != null ? producto.getCategoria().getId() : null,
                 producto.getCategoria() != null ? producto.getCategoria().getNombre() : null,
-                producto.isActivo()
+                producto.isActivo(),
+                urls,
+                principal
         );
     }
 
@@ -58,6 +71,10 @@ public class ProductoMapper {
 
         if (categoria != null) {
             producto.setCategoria(categoria);
+        }
+
+        if (dto.getDescripcion() != null) {
+            producto.setDescripcion(dto.getDescripcion());
         }
     }
 }

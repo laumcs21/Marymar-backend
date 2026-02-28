@@ -24,6 +24,9 @@ public class Producto {
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 
+    @Column(nullable = false, length = 500)
+    private String descripcion;
+
     @Column(nullable = false)
     private boolean activo = true;
 
@@ -42,10 +45,11 @@ public class Producto {
 
     public Producto() {}
 
-    public Producto(String nombre, BigDecimal precio, Categoria categoria) {
+    public Producto(String nombre, BigDecimal precio, Categoria categoria, String descripcion) {
         this.nombre = nombre;
         this.precio = precio;
         this.categoria = categoria;
+        this.descripcion = descripcion;
     }
 
     @PrePersist
@@ -82,6 +86,29 @@ public class Producto {
         return imagenes;
     }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setImagenes(List<ProductoImagen> imagenes) {
+        this.imagenes = imagenes;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
 
 
