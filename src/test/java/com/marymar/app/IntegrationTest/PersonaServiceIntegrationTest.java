@@ -7,7 +7,6 @@ import com.marymar.app.persistence.Repository.PersonaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @Transactional
 class PersonaServiceIntegrationTest {
-
-    @MockitoBean
-    private JavaMailSender javaMailSender;
 
     @Autowired
     private PersonaService personaService;
