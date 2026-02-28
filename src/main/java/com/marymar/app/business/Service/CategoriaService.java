@@ -16,4 +16,5 @@ public interface CategoriaService {
     CategoriaResponseDTO actualizar(Long id, CategoriaCreateDTO dto);
 
     void eliminar(Long id);
+
 }

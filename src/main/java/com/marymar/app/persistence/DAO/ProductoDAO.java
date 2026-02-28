@@ -90,6 +90,26 @@ public class ProductoDAO {
         producto.setActivo(false);
         repository.save(producto);
     }
+
+    public List<ProductoResponseDTO> obtenerPorCategoria(Long categoriaId) {
+        return repository.findByCategoriaId(categoriaId)
+                .stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public Producto guardarEntidad(Producto producto) {
+        return repository.save(producto);
+    }
+
+    public void eliminarDefinitivo(Long id) {
+
+        if (!repository.existsById(id)) {
+            throw new IllegalArgumentException("Producto no encontrado");
+        }
+
+        repository.deleteById(id);
+    }
 }
 
 

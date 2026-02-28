@@ -31,7 +31,8 @@ public class CategoriaMapper {
 
         return new CategoriaResponseDTO(
                 categoria.getId(),
-                categoria.getNombre()
+                categoria.getNombre(),
+0L
         );
     }
 

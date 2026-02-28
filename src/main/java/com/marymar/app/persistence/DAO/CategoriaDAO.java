@@ -94,5 +94,8 @@ public class CategoriaDAO {
         return repository.findByNombre(nombre).isPresent();
     }
 
+    public List<CategoriaResponseDTO> listarConCantidadProductos() {
+        return repository.listarConCantidadProductos();
+    }
 }
 

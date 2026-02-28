@@ -48,7 +48,7 @@ public class CategoriaServiceImpl implements CategoriaService {
     // =========================
     @Override
     public List<CategoriaResponseDTO> obtenerTodas() {
-        return categoriaDAO.obtenerTodas();
+        return categoriaDAO.listarConCantidadProductos();
     }
 
     // =========================
