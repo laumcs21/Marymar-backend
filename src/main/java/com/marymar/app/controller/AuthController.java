@@ -3,6 +3,8 @@ package com.marymar.app.controller;
 import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
 import com.marymar.app.business.Service.AuthService;
+import com.marymar.app.business.Service.PasswordRecoveryService;
+import com.marymar.app.business.Service.impl.PasswordRecoveryServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,9 +15,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordRecoveryService passwordRecoveryService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, PasswordRecoveryService passwordRecoveryService) {
         this.authService = authService;
+        this.passwordRecoveryService = passwordRecoveryService;
     }
 
     // ============================
@@ -92,5 +96,25 @@ public class AuthController {
         AuthResponseDTO response = authService.reenviarCodigo(email);
 
         return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequestDTO dto) {
+        passwordRecoveryService.sendRecoveryEmail(dto.getEmail());
+        return ResponseEntity.ok("Correo de recuperación enviado");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequestDTO dto) {
+
+        try {
+            passwordRecoveryService.resetPassword(dto.getToken(), dto.getNewPassword());
+            return ResponseEntity.ok(Map.of("message", "Contraseña actualizada"));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 }

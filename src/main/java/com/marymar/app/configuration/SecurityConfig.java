@@ -107,6 +107,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/validate-code").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-token").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/resend-code").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
