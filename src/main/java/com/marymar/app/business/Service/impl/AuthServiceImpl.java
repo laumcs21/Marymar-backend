@@ -4,6 +4,7 @@ import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
 import com.marymar.app.business.DTO.LoginRequestDTO;
 import com.marymar.app.business.DTO.PersonaResponseDTO;
 import com.marymar.app.business.DTO.RegisterRequestDTO;
+import com.marymar.app.business.Exception.CredencialesInvalidasException;
 import com.marymar.app.business.Service.AuthService;
 import com.marymar.app.business.Service.PersonaService;
 import com.marymar.app.business.Service.Util.GeneradorCodigo;
@@ -16,7 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+
+import java.time.LocalDateTime;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -47,7 +49,9 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("El email ya está registrado");
         }
 
-        Rol rol;
+        if (!Boolean.TRUE.equals(request.getAceptaHabeasData())) {
+            throw new IllegalArgumentException("Debe aceptar la política de tratamiento de datos.");
+        }
 
         Persona persona = Persona.builder()
                 .numeroIdentificacion(request.getNumeroIdentificacion())
@@ -56,10 +60,12 @@ public class AuthServiceImpl implements AuthService {
                 .contrasena(passwordEncoder.encode(request.getContrasena()))
                 .telefono(request.getTelefono())
                 .fechaNacimiento(request.getFechaNacimiento())
-                .rol(request.getRol())
+                .rol(Rol.CLIENTE)
                 .activo(true)
                 .build();
 
+        persona.setAceptoHabeasData(true);
+        persona.setFechaAceptacion(LocalDateTime.now());
         personaRepository.save(persona);
 
         String token = jwtService.generateToken(persona);
@@ -74,15 +80,56 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getContrasena()
-                )
-        );
-
         Persona persona = personaRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new CredencialesInvalidasException("Correo o contraseña incorrectos"));
+
+        if (persona.getIntentosFallidos() == null){
+            persona.setIntentosFallidos((0));
+        }
+
+        if (persona.getBloqueadoHasta() != null &&
+                persona.getBloqueadoHasta().isAfter(LocalDateTime.now())) {
+
+            throw new CredencialesInvalidasException("Cuenta bloqueada.");
+        }
+
+        try {
+
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getContrasena()
+                    )
+            );
+
+            persona.setIntentosFallidos(0);
+            persona.setBloqueadoHasta(null);
+            personaRepository.save(persona);
+
+        } catch (Exception e) {
+
+            persona.setIntentosFallidos(persona.getIntentosFallidos() + 1);
+
+            int intentosRestantes = 3 - persona.getIntentosFallidos();
+
+            if (persona.getIntentosFallidos() >= 3) {
+
+                persona.setBloqueadoHasta(LocalDateTime.now().plusMinutes(5));
+                persona.setIntentosFallidos(0);
+
+                personaRepository.save(persona);
+
+                throw new CredencialesInvalidasException("Cuenta bloqueada por 5 minutos.");
+            }
+
+            personaRepository.save(persona);
+
+            throw new CredencialesInvalidasException(
+                    "Correo o contraseña incorrectos. Te quedan "
+                            + intentosRestantes
+                            + " intentos antes de ser bloqueado por 5 minutos."
+            );
+        }
 
         generadorCodigo.generarCodigo(persona.getEmail());
 
@@ -93,7 +140,6 @@ public class AuthServiceImpl implements AuthService {
                 true
         );
     }
-
 
     @Override
     public PersonaResponseDTO verifyToken(String token) {

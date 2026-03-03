@@ -1,7 +1,9 @@
 package com.marymar.app.controller;
 
+import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
 import com.marymar.app.business.DTO.PersonaCreateDTO;
 import com.marymar.app.business.DTO.PersonaResponseDTO;
+import com.marymar.app.business.DTO.RegisterRequestDTO;
 import com.marymar.app.business.Service.PersonaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,10 +56,12 @@ public class PersonaController {
     // =========================
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<PersonaResponseDTO> crear(@RequestBody PersonaCreateDTO dto) {
-        PersonaResponseDTO created = personaService.crear(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<PersonaResponseDTO> crearDesdeAdmin(
+            @RequestBody PersonaCreateDTO dto) {
+
+        return ResponseEntity.ok(personaService.crear(dto));
     }
+
 
     // =========================
     // ADMIN: ACTUALIZAR CUALQUIERA

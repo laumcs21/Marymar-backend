@@ -52,6 +52,18 @@ public class Persona {
     @Column (name = "reset_token_expiration")
     private LocalDateTime resetTokenExpiration;
 
+    @Column (name = "intentos_fallidos")
+    private Integer intentosFallidos=0;
+
+    @Column (name = "bloqueado_hasta")
+    private LocalDateTime bloqueadoHasta;
+
+    @Column(name = "acepto_habeas_data", nullable = false)
+    private Boolean aceptoHabeasData = false;
+
+    @Column(name = "fecha_aceptacion")
+    private LocalDateTime fechaAceptacion;
+
     // =========================
     // CONSTRUCTOR VACÍO
     // =========================
@@ -251,5 +263,45 @@ public class Persona {
 
     public void setResetTokenExpiration(LocalDateTime resetTokenExpiration) {
         this.resetTokenExpiration = resetTokenExpiration;
+    }
+
+    public LocalDateTime getBloqueadoHasta() {
+        return bloqueadoHasta;
+    }
+
+    public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) {
+        this.bloqueadoHasta = bloqueadoHasta;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Integer getIntentosFallidos() {
+        return intentosFallidos;
+    }
+
+    public void setIntentosFallidos(Integer intentosFallidos) {
+        this.intentosFallidos = intentosFallidos;
+    }
+
+    public Boolean getAceptoHabeasData() {
+        return aceptoHabeasData;
+    }
+
+    public void setAceptoHabeasData(Boolean aceptoHabeasData) {
+        this.aceptoHabeasData = aceptoHabeasData;
+    }
+
+    public LocalDateTime getFechaAceptacion() {
+        return fechaAceptacion;
+    }
+
+    public void setFechaAceptacion(LocalDateTime fechaAceptacion) {
+        this.fechaAceptacion = fechaAceptacion;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

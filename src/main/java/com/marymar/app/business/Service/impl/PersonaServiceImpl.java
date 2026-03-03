@@ -185,10 +185,16 @@ public class PersonaServiceImpl implements PersonaService {
         }
 
         Rol rol;
+
         try {
             rol = Rol.valueOf(dto.getRol().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Rol inválido");
+            throw new IllegalArgumentException("Rol no válido");
+        }
+        if (esNuevo && rol == Rol.CLIENTE) {
+            throw new IllegalArgumentException(
+                    "Los clientes deben registrarse públicamente."
+            );
         }
 
         int edad = calcularEdad(dto.getFechaNacimiento());

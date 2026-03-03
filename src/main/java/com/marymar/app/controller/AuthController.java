@@ -4,8 +4,8 @@ import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
 import com.marymar.app.business.Service.AuthService;
 import com.marymar.app.business.Service.PasswordRecoveryService;
-import com.marymar.app.business.Service.impl.PasswordRecoveryServiceImpl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -30,9 +30,12 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> register(
             @RequestBody RegisterRequestDTO request) {
 
+        if (!request.getAceptaHabeasData()){
+            throw new IllegalArgumentException("Debe aceptar la política de tratamiento de datos.");
+        }
+
         return ResponseEntity.ok(authService.register(request));
     }
-
 
     // ============================
     // LOGIN

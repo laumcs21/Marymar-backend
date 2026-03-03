@@ -13,6 +13,7 @@ public class RegisterRequestDTO {
     private String telefono;
     private LocalDate fechaNacimiento;
     private Rol rol;
+    private Boolean aceptaHabeasData;
 
     public String getContrasena() {
         return contrasena;
@@ -68,6 +69,14 @@ public class RegisterRequestDTO {
 
     public void setTelefono(String telefono) {
         this.telefono = telefono;
+    }
+
+    public Boolean getAceptaHabeasData() {
+        return aceptaHabeasData;
+    }
+
+    public void setAceptaHabeasData(Boolean aceptaHabeasData) {
+        this.aceptaHabeasData = aceptaHabeasData;
     }
 }
 
