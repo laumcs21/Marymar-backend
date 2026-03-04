@@ -99,10 +99,10 @@ public class PersonaDAO {
     // =========================
     // Desactivar (borrado lógico)
     // =========================
-    public void desactivar(Long id) {
+    public void cambiarEstado(Long id, boolean activo) {
 
         Persona persona = obtenerEntidadPorId(id);
-        persona.setActivo(false);
+        persona.setActivo(activo);
         repository.save(persona);
     }
 
@@ -123,6 +123,10 @@ public class PersonaDAO {
 
     public boolean existeEmailEnOtroUsuario(String email, Long idActual) {
         return repository.existsByEmailAndIdNot(email, idActual);
+    }
+
+    public boolean existeNumeroIdentificacion(String numeroIdentificacion) {
+        return repository.existsByNumeroIdentificacion(numeroIdentificacion);
     }
 
 }

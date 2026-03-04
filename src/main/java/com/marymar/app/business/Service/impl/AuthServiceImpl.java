@@ -46,7 +46,11 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponseDTO register(RegisterRequestDTO request) {
 
         if (personaDAO.existeEmail(request.getEmail())) {
-            throw new RuntimeException("El email ya está registrado");
+            throw new IllegalArgumentException("El email ya está registrado");
+        }
+
+        if (personaDAO.existeNumeroIdentificacion(request.getNumeroIdentificacion())) {
+            throw new IllegalArgumentException("La identificación ya está registrada");
         }
 
         if (!Boolean.TRUE.equals(request.getAceptaHabeasData())) {

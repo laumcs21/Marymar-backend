@@ -86,8 +86,8 @@ public class PersonaServiceImpl implements PersonaService {
     // Desactivar
     // =========================
     @Override
-    public void desactivar(Long id) {
-        personaDAO.desactivar(id);
+    public void cambiarEstado(Long id, boolean activo) {
+        personaDAO.cambiarEstado(id, activo);
     }
 
     // =========================
@@ -137,6 +137,10 @@ public class PersonaServiceImpl implements PersonaService {
         if (dto.getNumeroIdentificacion() == null ||
                 dto.getNumeroIdentificacion().isBlank()) {
             throw new IllegalArgumentException("La identificación es obligatoria");
+        }
+
+        if (personaDAO.existeNumeroIdentificacion(dto.getNumeroIdentificacion())) {
+            throw new IllegalArgumentException("La identificación ya está registrada");
         }
 
         if (dto.getNombre() == null || dto.getNombre().isBlank()) {

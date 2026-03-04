@@ -18,7 +18,7 @@ public interface PersonaService {
 
     PersonaResponseDTO actualizar(Long id, PersonaCreateDTO dto);
 
-    void desactivar(Long id);
+    void cambiarEstado(Long id, boolean activo);
 
     void eliminar(Long id);
 

@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/personas")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PersonaController {
 
     private final PersonaService personaService;
@@ -101,10 +100,14 @@ public class PersonaController {
     // =========================
     // ADMIN: DESACTIVAR
     // =========================
-    @PatchMapping("/{id}/desactivar")
+    @PatchMapping("/{id}/estado")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> desactivar(@PathVariable Long id) {
-        personaService.desactivar(id);
+    public ResponseEntity<Void> cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam boolean activo) {
+
+        personaService.cambiarEstado(id, activo);
         return ResponseEntity.noContent().build();
     }
+
 }
