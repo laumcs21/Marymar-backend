@@ -4,6 +4,7 @@ import com.marymar.app.business.DTO.CategoriaCreateDTO;
 import com.marymar.app.business.DTO.CategoriaResponseDTO;
 import com.marymar.app.business.Service.CategoriaService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class CategoriaController {
     // CREAR
     // =========================
     @PostMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CategoriaResponseDTO> crear(
             @RequestBody CategoriaCreateDTO dto
     ) {
@@ -44,6 +46,7 @@ public class CategoriaController {
     // ACTUALIZAR
     // =========================
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<CategoriaResponseDTO> actualizar(
             @PathVariable Long id,
             @RequestBody CategoriaCreateDTO dto
@@ -57,6 +60,7 @@ public class CategoriaController {
     // ELIMINAR
     // =========================
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         categoriaService.eliminar(id);
         return ResponseEntity.noContent().build();

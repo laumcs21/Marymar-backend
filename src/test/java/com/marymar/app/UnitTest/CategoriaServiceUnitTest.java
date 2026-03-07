@@ -11,7 +11,7 @@ import org.mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class CategoriaServiceImplTest {
+class CategoriaServiceUnitTest {
 
     @Mock
     private CategoriaDAO categoriaDAO;
@@ -30,7 +30,7 @@ class CategoriaServiceImplTest {
         CategoriaCreateDTO dto = new CategoriaCreateDTO("Mariscos");
 
         CategoriaResponseDTO response =
-                new CategoriaResponseDTO(1L, "Mariscos");
+                new CategoriaResponseDTO(1L, "Mariscos", 0L);
 
         when(categoriaDAO.crear(dto)).thenReturn(response);
 
@@ -51,4 +51,3 @@ class CategoriaServiceImplTest {
                 () -> categoriaService.crear(dto));
     }
 }
-

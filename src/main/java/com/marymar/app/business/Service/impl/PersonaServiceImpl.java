@@ -111,7 +111,7 @@ public class PersonaServiceImpl implements PersonaService {
             Persona existente = personaOpt.get();
 
             if (!existente.isActivo()) {
-                throw new RuntimeException("Usuario desactivado.");
+                throw new IllegalArgumentException("Usuario desactivado.");
             }
 
             return existente;
@@ -139,12 +139,23 @@ public class PersonaServiceImpl implements PersonaService {
             throw new IllegalArgumentException("La identificación es obligatoria");
         }
 
-        if (personaDAO.existeNumeroIdentificacion(dto.getNumeroIdentificacion())) {
-            throw new IllegalArgumentException("La identificación ya está registrada");
-        }
-
         if (dto.getNombre() == null || dto.getNombre().isBlank()) {
             throw new IllegalArgumentException("El nombre es obligatorio");
+        }
+
+        if (esNuevo) {
+
+            if (personaDAO.existeNumeroIdentificacion(dto.getNumeroIdentificacion())) {
+                throw new IllegalArgumentException("La identificación ya está registrada");
+            }
+
+        } else {
+
+            if (personaDAO.existeNumeroIdentificacionEnOtroUsuario(
+                    dto.getNumeroIdentificacion(), idActual)) {
+
+                throw new IllegalArgumentException("La identificación ya está registrada");
+            }
         }
 
         if (dto.getEmail() == null || !esEmailValido(dto.getEmail())) {

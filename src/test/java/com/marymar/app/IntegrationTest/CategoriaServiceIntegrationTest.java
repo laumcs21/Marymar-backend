@@ -12,7 +12,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(
+        properties = {
+                "jwt.secret=test_jwt_secret",
+                "brevo.api.key=test_key",
+                "cloudinary.cloud_name=test",
+                "cloudinary.api_key=test",
+                "cloudinary.api_secret=test",
+                "spring.mail.host=localhost",
+                "spring.mail.port=1025"
+        }
+)
 @ActiveProfiles("test")
 @Transactional
 class CategoriaServiceIntegrationTest {
@@ -76,3 +86,4 @@ class CategoriaServiceIntegrationTest {
         });
     }
 }
+

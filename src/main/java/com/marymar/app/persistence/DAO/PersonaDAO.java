@@ -129,5 +129,8 @@ public class PersonaDAO {
         return repository.existsByNumeroIdentificacion(numeroIdentificacion);
     }
 
+    public boolean existeNumeroIdentificacionEnOtroUsuario(String numeroIdentificacion, Long idActual) {
+        return repository.existsByNumeroIdentificacionAndIdNot(numeroIdentificacion, idActual);
+    }
 }
 

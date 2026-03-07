@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class PersonaServiceTest {
+class PersonaServiceImplUnitTest {
 
     @Mock
     private PersonaDAO personaDAO;
@@ -29,30 +29,30 @@ class PersonaServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);}
 
-        @Test
-        void deberiaCrearUsuarioCorrectamente() {
+    @Test
+    void deberiaCrearUsuarioCorrectamente() {
 
-            PersonaCreateDTO dto = new PersonaCreateDTO(
-                    "123456",
-                    "Laura",
-                    "laura@test.com",
-                    "Admin123!",
-                    "3001234567",
-                    LocalDate.of(2000,1,1),
-                    "CLIENTE",
-                    "Calle 123",
-                    null
-            );
+        PersonaCreateDTO dto = new PersonaCreateDTO(
+                "123456",
+                "Laura",
+                "laura@test.com",
+                "Admin123!",
+                "3001234567",
+                LocalDate.of(2000,1,1),
+                "MESERO",
+                "Calle 123",
+                6000000.0
+        );
 
-            when(passwordEncoder.encode(any())).thenReturn("HASHED");
-            when(personaDAO.crear(any())).thenReturn(new PersonaResponseDTO());
+        when(passwordEncoder.encode(any())).thenReturn("HASHED");
+        when(personaDAO.crear(any())).thenReturn(new PersonaResponseDTO());
 
-            PersonaResponseDTO response = personaService.crear(dto);
+        PersonaResponseDTO response = personaService.crear(dto);
 
-            assertNotNull(response);
-            verify(passwordEncoder).encode("Admin123!");
-            verify(personaDAO).crear(any());
-        }
+        assertNotNull(response);
+        verify(passwordEncoder).encode("Admin123!");
+        verify(personaDAO).crear(any());
+    }
 
     @Test
     void noDeberiaCrearSiContrasenaInvalida() {
@@ -110,4 +110,3 @@ class PersonaServiceTest {
 
 
 }
-

@@ -120,18 +120,32 @@ public class ProductoServiceImpl implements ProductoService {
 
         Categoria categoria = categoriaDAO.obtenerEntidadPorId(dto.getCategoriaId());
 
-        // 1️⃣ Actualizar datos básicos
         productoMapper.updateFromDTO(producto, dto, categoria);
 
-        // 2️⃣ Guardar primero para que Hibernate sincronice correctamente
         producto = productoDAO.guardarEntidad(producto);
 
-        // 3️⃣ Ahora agregar imágenes nuevas (sin tocar las existentes)
         if (imagenes != null && !imagenes.isEmpty()) {
 
-            int ordenInicial = producto.getImagenes() != null
-                    ? producto.getImagenes().size()
-                    : 0;
+            // eliminar imágenes anteriores de Cloudinary
+            if (producto.getImagenes() != null && !producto.getImagenes().isEmpty()) {
+
+                for (ProductoImagen img : producto.getImagenes()) {
+
+                    try {
+                        if (img.getPublicId() != null) {
+                            imageService.deleteByPublicId(img.getPublicId());
+                        }
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Error eliminando la imagen");
+                    }
+
+                }
+
+                // limpiar lista en la entidad
+                producto.getImagenes().clear();
+            }
+
+            int ordenInicial = 0;
 
             for (MultipartFile imagen : imagenes) {
 
@@ -153,7 +167,7 @@ public class ProductoServiceImpl implements ProductoService {
                 productoImagen.setUrl(upload.getUrl());
                 productoImagen.setPublicId(upload.getPublicId());
                 productoImagen.setProducto(producto);
-                productoImagen.setPrincipal(producto.getImagenes().isEmpty());
+                productoImagen.setPrincipal(ordenInicial == 0);
                 productoImagen.setOrden(ordenInicial);
 
                 producto.getImagenes().add(productoImagen);
@@ -161,7 +175,6 @@ public class ProductoServiceImpl implements ProductoService {
                 ordenInicial++;
             }
 
-            // 4️⃣ Guardar nuevamente con las imágenes agregadas
             producto = productoDAO.guardarEntidad(producto);
         }
 

@@ -6,6 +6,7 @@ import com.marymar.app.persistence.Entity.Rol;
 import com.marymar.app.persistence.Repository.PersonaRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -22,9 +23,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final JwtService jwtService;
     private final PersonaRepository personaRepository;
     private final PasswordEncoder passwordEncoder;
-
-    private final String FRONT_URL = "http://localhost:4200/oauth-callback";
-
+    @Value("${app.frontend.url}")
+    private String FRONT_URL;
     public OAuth2SuccessHandler(
             JwtService jwtService,
             PersonaRepository personaRepository,
@@ -48,7 +48,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String nombre = oAuth2User.getAttribute("name");
 
         if (email == null || email.isBlank()) {
-            response.sendRedirect("http://localhost:4200/login?error=no_email");
+            response.sendRedirect(FRONT_URL + "/login?error=no_email");
             return;
         }
 
@@ -68,7 +68,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String rol = persona.getRol().name(); // "CLIENTE", "ADMINISTRADOR", "MESERO"
 
         String redirectUrl = UriComponentsBuilder
-                .fromUriString(FRONT_URL)
+                .fromUriString(FRONT_URL + "/oauth-callback")
                 .fragment("token=" + token + "&rol=" + rol)
                 .build()
                 .toUriString();

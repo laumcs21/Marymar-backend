@@ -33,9 +33,9 @@ public class Persona {
     private Rol rol;
 
     @Column(name = "direccion_envio")
-    private String direccionEnvio; // OPCIONAL
+    private String direccionEnvio;
 
-    private Double salario; // OPCIONAL
+    private Double salario;
 
     @Column(nullable = false)
     private boolean activo = true;

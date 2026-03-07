@@ -2,6 +2,7 @@ package com.marymar.app.persistence.Repository;
 
 import com.marymar.app.persistence.Entity.Persona;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
@@ -10,5 +11,6 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
     boolean existsByNumeroIdentificacion (String numeroIdentificacion);
     boolean existsByEmailAndIdNot(String email, Long id);
     Optional<Persona> findByResetToken (String resetToken);
+    boolean existsByNumeroIdentificacionAndIdNot(String numeroIdentificacion, Long id);
 }
 

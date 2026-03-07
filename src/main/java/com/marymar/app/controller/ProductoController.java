@@ -5,6 +5,7 @@ import com.marymar.app.business.DTO.ProductoResponseDTO;
 import com.marymar.app.business.Service.ProductoService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +25,7 @@ public class ProductoController {
     // CREAR
     // =========================
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ProductoResponseDTO crear(
             @RequestPart("data") ProductoCreateDTO dto,
             @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes
@@ -53,6 +55,7 @@ public class ProductoController {
     // ACTUALIZAR
     // =========================
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<ProductoResponseDTO> actualizar(
             @PathVariable Long id,
             @RequestPart("data") ProductoCreateDTO dto,
@@ -68,6 +71,7 @@ public class ProductoController {
     // DESACTIVAR
     // =========================
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> desactivar(
             @PathVariable Long id
     ) {
@@ -83,6 +87,7 @@ public class ProductoController {
     }
 
     @DeleteMapping("/definitivo/{id}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public void eliminarDefinitivo(@PathVariable Long id) {
         productoService.eliminarDefinitivo(id);
     }

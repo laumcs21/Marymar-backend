@@ -5,6 +5,7 @@ import com.marymar.app.business.Service.EmailService;
 import com.marymar.app.business.Service.PasswordRecoveryService;
 import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Repository.PersonaRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,8 @@ public class PasswordRecoveryServiceImpl implements PasswordRecoveryService {
     private final PersonaRepository personaRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-    private final String FRONT_RESET_URL = "http://localhost:4200/reset-password";
+    @Value("${app.frontend.url}")
+    private String FRONT_RESET_URL;
 
     public PasswordRecoveryServiceImpl(PersonaRepository personaRepository, EmailService emailService, PasswordEncoder passwordEncoder) {
         this.personaRepository = personaRepository;
@@ -29,7 +31,7 @@ public class PasswordRecoveryServiceImpl implements PasswordRecoveryService {
     public void sendRecoveryEmail(String email) {
 
         Persona persona = personaRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("No existe un usuario con ese correo"));
+                .orElseThrow(() -> new IllegalArgumentException("No existe un usuario con ese correo"));
 
         String token = UUID.randomUUID().toString();
         persona.setResetToken(token);
@@ -37,8 +39,7 @@ public class PasswordRecoveryServiceImpl implements PasswordRecoveryService {
 
         personaRepository.save(persona);
 
-        String link = FRONT_RESET_URL + "?token=" + token;
-
+        String link = FRONT_RESET_URL + "/reset-password?token=" + token;
         String subject = "Recuperación de contraseña";
         String body = link;
 
@@ -53,7 +54,7 @@ public class PasswordRecoveryServiceImpl implements PasswordRecoveryService {
 
         if (persona.getResetTokenExpiration() == null ||
                 persona.getResetTokenExpiration().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token expirado");
+            throw new IllegalArgumentException("Token expirado");
         }
 
         validarPassword(newPassword);
@@ -68,27 +69,27 @@ public class PasswordRecoveryServiceImpl implements PasswordRecoveryService {
     private void validarPassword(String password) {
 
         if (password == null || password.isBlank()) {
-            throw new RuntimeException("La contraseña es obligatoria");
+            throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
         if (password.length() < 6) {
-            throw new RuntimeException("Debe tener mínimo 6 caracteres");
+            throw new IllegalArgumentException("Debe tener mínimo 6 caracteres");
         }
 
         if (!password.matches(".*[A-Z].*")) {
-            throw new RuntimeException("Debe contener al menos una mayúscula");
+            throw new IllegalArgumentException("Debe contener al menos una mayúscula");
         }
 
         if (!password.matches(".*[a-z].*")) {
-            throw new RuntimeException("Debe contener al menos una minúscula");
+            throw new IllegalArgumentException("Debe contener al menos una minúscula");
         }
 
         if (!password.matches(".*\\d.*")) {
-            throw new RuntimeException("Debe contener al menos un número");
+            throw new IllegalArgumentException("Debe contener al menos un número");
         }
 
         if (!password.matches(".*[@$!%*?&].*")) {
-            throw new RuntimeException("Debe contener al menos un carácter especial");
+            throw new IllegalArgumentException("Debe contener al menos un carácter especial");
         }
     }
 }

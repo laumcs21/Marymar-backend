@@ -3,19 +3,29 @@ package com.marymar.app.IntegrationTest;
 import com.marymar.app.business.DTO.PersonaCreateDTO;
 import com.marymar.app.business.DTO.PersonaResponseDTO;
 import com.marymar.app.business.Service.PersonaService;
+import com.marymar.app.persistence.Entity.Rol;
 import com.marymar.app.persistence.Repository.PersonaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(
+        properties = {
+                "jwt.secret=test_jwt_secret",
+                "brevo.api.key=test_key",
+                "cloudinary.cloud_name=test",
+                "cloudinary.api_key=test",
+                "cloudinary.api_secret=test",
+                "spring.mail.host=localhost",
+                "spring.mail.port=1025"
+        }
+)
 @ActiveProfiles("test")
 @Transactional
 class PersonaServiceIntegrationTest {
@@ -39,10 +49,9 @@ class PersonaServiceIntegrationTest {
 
         assertNotNull(creada.getId());
         assertEquals("Laura", creada.getNombre());
-        assertEquals("CLIENTE", creada.getRol());
+        assertEquals(Rol.ADMINISTRADOR, creada.getRol());
         assertTrue(creada.isActivo());
 
-        // Verificar que realmente quedó en BD
         var entidad = personaRepository.findById(creada.getId()).orElse(null);
         assertNotNull(entidad);
         assertEquals("Laura", entidad.getNombre());
@@ -92,7 +101,7 @@ class PersonaServiceIntegrationTest {
     void noDeberiaPermitirContrasenaInvalida() {
 
         PersonaCreateDTO dto = crearPersonaBase();
-        dto.setContrasena("123"); // inválida
+        dto.setContrasena("123"); // incorrecta
 
         assertThrows(RuntimeException.class, () -> {
             personaService.crear(dto);
@@ -127,8 +136,9 @@ class PersonaServiceIntegrationTest {
         dto.setContrasena("Abc123$");
         dto.setTelefono("3000000000");
         dto.setFechaNacimiento(LocalDate.of(2000, 1, 1));
-        dto.setRol("CLIENTE");
+        dto.setRol("ADMINISTRADOR");
         dto.setDireccionEnvio("Calle 123");
         return dto;
     }
 }
+

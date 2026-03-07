@@ -8,8 +8,8 @@ public interface ImageService {
 
     void deleteByPublicId(String publicId) throws Exception;
 
-    /** Intenta extraer el public_id desde una secure_url de Cloudinary */
     String tryExtractPublicId(String secureUrl);
+
 
     class Upload {
         private final String url;
