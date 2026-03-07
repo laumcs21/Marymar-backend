@@ -46,8 +46,11 @@ public class GeneradorCodigoImpl implements GeneradorCodigo {
 
         verificacionCodigoRepository.save(verification);
 
-        emailService.send(email, code);
-        System.out.println("Nuevo Codigo: " +code);
+        try {
+            emailService.send(email, code);
+        } catch (Exception e) {
+            throw new RuntimeException("Error enviando el código al correo");
+        }        System.out.println("Nuevo Codigo: " +code);
         return "Código enviado al correo";
     }
 

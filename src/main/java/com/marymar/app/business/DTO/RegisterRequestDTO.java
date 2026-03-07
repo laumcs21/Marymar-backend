@@ -14,6 +14,15 @@ public class RegisterRequestDTO {
     private LocalDate fechaNacimiento;
     private Rol rol;
     private Boolean aceptaHabeasData;
+    private String captchaToken;
+
+    public String getCaptchaToken() {
+        return captchaToken;
+    }
+
+    public void setCaptchaToken(String captchaToken) {
+        this.captchaToken = captchaToken;
+    }
 
     public String getContrasena() {
         return contrasena;

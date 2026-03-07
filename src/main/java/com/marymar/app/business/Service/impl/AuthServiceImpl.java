@@ -7,6 +7,7 @@ import com.marymar.app.business.DTO.RegisterRequestDTO;
 import com.marymar.app.business.Exception.CredencialesInvalidasException;
 import com.marymar.app.business.Service.AuthService;
 import com.marymar.app.business.Service.PersonaService;
+import com.marymar.app.business.Service.RecaptchaService;
 import com.marymar.app.business.Service.Util.GeneradorCodigo;
 import com.marymar.app.configuration.Security.JwtService;
 import com.marymar.app.persistence.DAO.PersonaDAO;
@@ -30,9 +31,9 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final GeneradorCodigo generadorCodigo;
     private final AuthenticationManager authenticationManager;
+    private final RecaptchaService recaptchaService;
 
-
-    public AuthServiceImpl(PersonaRepository personaRepository, PersonaDAO personaDAO, PersonaService personaService, PasswordEncoder passwordEncoder, JwtService jwtService, GeneradorCodigo generadorCodigo, AuthenticationManager authenticationManager) {
+    public AuthServiceImpl(PersonaRepository personaRepository, PersonaDAO personaDAO, PersonaService personaService, PasswordEncoder passwordEncoder, JwtService jwtService, GeneradorCodigo generadorCodigo, AuthenticationManager authenticationManager, RecaptchaService recaptchaService) {
         this.personaRepository = personaRepository;
         this.personaService = personaService;
         this.personaDAO = personaDAO;
@@ -40,6 +41,7 @@ public class AuthServiceImpl implements AuthService {
         this.jwtService = jwtService;
         this.generadorCodigo = generadorCodigo;
         this.authenticationManager = authenticationManager;
+        this.recaptchaService = recaptchaService;
     }
 
     @Override
@@ -55,6 +57,10 @@ public class AuthServiceImpl implements AuthService {
 
         if (!Boolean.TRUE.equals(request.getAceptaHabeasData())) {
             throw new IllegalArgumentException("Debe aceptar la política de tratamiento de datos.");
+        }
+
+        if (!recaptchaService.validarCaptcha(request.getCaptchaToken())) {
+            throw new IllegalArgumentException("Captcha inválido");
         }
 
         Persona persona = Persona.builder()
@@ -74,6 +80,8 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtService.generateToken(persona);
 
+        System.out.println("TOKEN RECIBIDO BACK: " + request.getCaptchaToken());
+
         return new AuthResponseDTO(
                 persona.getNombre(),
                 persona.getRol(),
@@ -83,7 +91,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponseDTO login(LoginRequestDTO request) {
-
+        if (!recaptchaService.validarCaptcha(request.getCaptchaToken())) {
+            throw new CredencialesInvalidasException("Captcha inválido");
+        }
         Persona persona = personaRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CredencialesInvalidasException("Correo o contraseña incorrectos"));
 
@@ -181,7 +191,11 @@ public class AuthServiceImpl implements AuthService {
         Persona persona = personaRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        generadorCodigo.generarCodigo(email);
+        try {
+            generadorCodigo.generarCodigo(email);
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo enviar el código");
+        }
 
         return new AuthResponseDTO(
                 persona.getNombre(),
