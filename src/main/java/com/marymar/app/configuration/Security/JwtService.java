@@ -3,6 +3,7 @@ package com.marymar.app.configuration.Security;
 import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Entity.Rol;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -83,21 +84,27 @@ public class JwtService {
                 && !isTokenExpired(token);
     }
 
-    public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
+        public boolean isTokenExpired(String token) {
+            try {
+                return extractExpiration(token).before(new Date());
+            } catch (ExpiredJwtException e) {
+                return true;
+            }
+        }
     // =========================================
     // 🔧 INTERNOS
     // =========================================
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        }
     }
 
     private SecretKey getSignInKey() {

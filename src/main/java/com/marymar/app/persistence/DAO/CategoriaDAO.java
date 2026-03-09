@@ -97,5 +97,9 @@ public class CategoriaDAO {
     public List<CategoriaResponseDTO> listarConCantidadProductos() {
         return repository.listarConCantidadProductos();
     }
+
+    public long contarProductosPorCategoria(Long categoriaId) {
+        return repository.contarProductosPorCategoria(categoriaId);
+    }
 }
 

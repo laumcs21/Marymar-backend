@@ -27,10 +27,9 @@ public class AuthController {
     // ============================
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(
-            @RequestBody RegisterRequestDTO request) {
+    public ResponseEntity<AuthResponseDTO> register(@RequestBody RegisterRequestDTO request) {
 
-        if (!request.getAceptaHabeasData()){
+        if (!request.getAceptaHabeasData()) {
             throw new IllegalArgumentException("Debe aceptar la política de tratamiento de datos.");
         }
 

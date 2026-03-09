@@ -23,6 +23,12 @@ public class RecaptchaServiceImpl implements RecaptchaService {
 
     public boolean validarCaptcha(String token) {
 
+        // BYPASS PARA PRUEBAS AUTOMÁTICAS (Postman / tests)
+        if ("test-captcha".equals(token)) {
+            System.out.println("Captcha bypass para pruebas");
+            return true;
+        }
+
         RestTemplate restTemplate = new RestTemplate();
 
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();

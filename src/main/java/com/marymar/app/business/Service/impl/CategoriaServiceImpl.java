@@ -76,9 +76,11 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Override
     public void eliminar(Long id) {
 
-        Categoria categoria = categoriaDAO.obtenerEntidadPorId(id);
+        categoriaDAO.obtenerEntidadPorId(id);
 
-        if (categoria.getProductos() != null && !categoria.getProductos().isEmpty()) {
+        long cantidadProductos = categoriaDAO.contarProductosPorCategoria(id);
+
+        if (cantidadProductos > 0) {
             throw new IllegalStateException("No se puede eliminar la categoría porque tiene productos asociados");
         }
 
