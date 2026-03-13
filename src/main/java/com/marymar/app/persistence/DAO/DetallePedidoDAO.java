@@ -62,7 +62,7 @@ public class DetallePedidoDAO {
     // =========================
     // Obtener por pedido
     // =========================
-    public List<DetallePedidoResponseDTO> obtenerPorPedido(Integer pedidoId) {
+    public List<DetallePedidoResponseDTO> obtenerPorPedido(Long pedidoId) {
 
         return repository.findByPedidoId(pedidoId)
                 .stream()

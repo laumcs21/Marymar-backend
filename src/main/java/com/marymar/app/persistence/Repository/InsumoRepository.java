@@ -8,5 +8,6 @@ import java.util.Optional;
 public interface InsumoRepository extends JpaRepository<Insumo, Long> {
 
     Optional<Insumo> findByNombre(String nombre);
+    void deleteById (Long insumoId);
 
 }

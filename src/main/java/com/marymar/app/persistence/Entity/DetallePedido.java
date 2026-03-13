@@ -34,9 +34,10 @@ public class DetallePedido {
     public DetallePedido(Producto producto, Integer cantidad) {
         this.producto = producto;
         this.cantidad = cantidad;
-        this.precioUnitario = producto.getPrecio();
-        this.subtotal = this.precioUnitario
-                .multiply(BigDecimal.valueOf(cantidad));
+        if(producto != null){
+            this.precioUnitario = producto.getPrecio();
+            this.subtotal = this.precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+        }
     }
 
     public Long getId() { return id; }
