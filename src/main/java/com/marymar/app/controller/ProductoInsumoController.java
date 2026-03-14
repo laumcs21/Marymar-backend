@@ -6,9 +6,10 @@ import com.marymar.app.persistence.Entity.ProductoInsumo;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/producto-insumo")
+@RequestMapping("/api/producto-insumo")
 public class ProductoInsumoController {
 
     private final ProductoInsumoService service;
@@ -23,7 +24,7 @@ public class ProductoInsumoController {
     }
 
     @GetMapping("/producto/{productoId}")
-    public List<ProductoInsumo> listar(@PathVariable Long productoId){
+    public List<Map<String,Object>> listar(@PathVariable Long productoId){
         return service.obtenerInsumosProducto(productoId);
     }
 
