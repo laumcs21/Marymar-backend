@@ -4,6 +4,7 @@ import com.marymar.app.business.DTO.DetallePedidoCreateDTO;
 import com.marymar.app.business.DTO.PedidoCreateDTO;
 import com.marymar.app.business.DTO.PedidoResponseDTO;
 import com.marymar.app.business.Service.PedidoService;
+import com.marymar.app.persistence.DAO.MesaDAO;
 import com.marymar.app.persistence.DAO.PedidoDAO;
 import com.marymar.app.persistence.DAO.PersonaDAO;
 import com.marymar.app.persistence.Entity.*;
@@ -20,32 +21,69 @@ public class PedidoServiceImpl implements PedidoService {
     private final PersonaDAO personaDAO;
     private final ProductoRepository productoRepository;
     private final InventarioService inventarioService;
+    private final MesaDAO mesaDAO;
 
     public PedidoServiceImpl(
             PedidoDAO pedidoDAO,
             PersonaDAO personaDAO,
             ProductoRepository productoRepository,
-            InventarioService inventarioService) {
+            InventarioService inventarioService, MesaDAO mesaDAO) {
 
         this.pedidoDAO = pedidoDAO;
         this.personaDAO = personaDAO;
         this.productoRepository = productoRepository;
         this.inventarioService = inventarioService;
+        this.mesaDAO = mesaDAO;
     }
 
     @Override
     public PedidoResponseDTO crearPedido(PedidoCreateDTO dto) {
 
-        Persona cliente = personaDAO.obtenerEntidadPorId(dto.getClienteId());
+        if (dto.getTipo() == null) {
+            throw new IllegalArgumentException("El tipo de pedido es obligatorio");
+        }
+
+        TipoPedido tipo = TipoPedido.valueOf(dto.getTipo());
 
         Persona mesero = null;
         if (dto.getMeseroId() != null) {
             mesero = personaDAO.obtenerEntidadPorId(dto.getMeseroId());
         }
 
-        Pedido pedido = new Pedido(cliente, mesero);
+        Pedido pedido;
 
-        if(dto.getDetalles() == null || dto.getDetalles().isEmpty()){
+        // =========================
+        // PEDIDO EN MESA
+        // =========================
+        if (tipo == TipoPedido.MESA) {
+
+            if (dto.getMesaId() == null) {
+                throw new IllegalArgumentException("La mesa es obligatoria para pedidos en mesa");
+            }
+
+            Mesa mesa = mesaDAO.obtenerEntidad(dto.getMesaId());
+
+            pedido = new Pedido(mesa, mesero);
+        }
+
+        // =========================
+        // PEDIDO DOMICILIO
+        // =========================
+        else {
+
+            if (dto.getClienteId() == null) {
+                throw new IllegalArgumentException("El cliente es obligatorio para domicilio");
+            }
+
+            Persona cliente = personaDAO.obtenerEntidadPorId(dto.getClienteId());
+
+            pedido = new Pedido(cliente, mesero);
+        }
+
+        // =========================
+        // DETALLES
+        // =========================
+        if (dto.getDetalles() == null || dto.getDetalles().isEmpty()) {
             throw new IllegalArgumentException("El pedido debe tener al menos un producto");
         }
 
@@ -95,6 +133,37 @@ public class PedidoServiceImpl implements PedidoService {
         EstadoPedido estado = EstadoPedido.valueOf(nuevoEstado);
 
         pedido.setEstado(estado);
+
+        return pedidoDAO.actualizar(pedido);
+    }
+
+    @Override
+    public PedidoResponseDTO obtenerOCrearPedidoPorMesa(Long mesaId, Long meseroId) {
+
+        Pedido existente = pedidoDAO.obtenerPedidoActivoPorMesa(mesaId);
+
+        if (existente != null) {
+            return pedidoDAO.actualizar(existente);
+        }
+
+        Persona mesero = personaDAO.obtenerEntidadPorId(meseroId);
+
+        Mesa mesa = new Mesa();
+        mesa.setId(mesaId);
+
+        Pedido nuevo = new Pedido(mesa, mesero);
+
+        return pedidoDAO.guardar(nuevo);
+    }
+
+    @Override
+    public PedidoResponseDTO obtenerPedidoPorMesa(Long mesaId) {
+
+        Pedido pedido = pedidoDAO.obtenerPedidoActivoPorMesa(mesaId);
+
+        if (pedido == null) {
+            throw new IllegalArgumentException("No hay pedido activo para esta mesa");
+        }
 
         return pedidoDAO.actualizar(pedido);
     }

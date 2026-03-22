@@ -81,4 +81,12 @@ public class PedidoDAO {
         Pedido actualizado = repository.save(pedido);
         return mapper.toDTO(actualizado);
     }
+
+    public Pedido obtenerPedidoActivoPorMesa(Long mesaId) {
+
+        return repository.findByMesaIdAndEstado(
+                mesaId,
+                com.marymar.app.persistence.Entity.EstadoPedido.CREADO
+        ).orElse(null);
+    }
 }

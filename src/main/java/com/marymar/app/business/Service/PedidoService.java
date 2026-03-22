@@ -18,4 +18,7 @@ public interface PedidoService {
     PedidoResponseDTO cambiarEstado(Long id, String nuevoEstado);
 
 
+    PedidoResponseDTO obtenerOCrearPedidoPorMesa(Long mesaId, Long meseroId);
+
+    PedidoResponseDTO obtenerPedidoPorMesa(Long mesaId);
 }

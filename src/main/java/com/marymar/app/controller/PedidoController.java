@@ -51,4 +51,12 @@ public class PedidoController {
 
         return ResponseEntity.ok(pedidoService.cambiarEstado(id, estado));
     }
+
+    @PreAuthorize("hasRole('MESERO')")
+    @GetMapping("/mesa/{mesaId}")
+    public ResponseEntity<PedidoResponseDTO> obtenerPorMesa(@PathVariable Long mesaId){
+        return ResponseEntity.ok(
+                pedidoService.obtenerPedidoPorMesa(mesaId)
+        );
+    }
 }

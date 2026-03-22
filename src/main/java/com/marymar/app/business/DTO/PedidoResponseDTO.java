@@ -9,8 +9,17 @@ public class PedidoResponseDTO {
     private Long id;
     private LocalDateTime fecha;
     private String estado;
+
+    private String tipo;
+
     private String clienteNombre;
+
+    private Long meseroId;
     private String meseroNombre;
+
+    private Long mesaId;
+    private Integer numeroMesa;
+
     private BigDecimal total;
     private List<DetallePedidoResponseDTO> detalles;
 
@@ -19,45 +28,47 @@ public class PedidoResponseDTO {
     public PedidoResponseDTO(Long id,
                              LocalDateTime fecha,
                              String estado,
+                             String tipo,
                              String clienteNombre,
+                             Long meseroId,
                              String meseroNombre,
+                             Long mesaId,
+                             Integer numeroMesa,
                              BigDecimal total,
                              List<DetallePedidoResponseDTO> detalles) {
+
         this.id = id;
         this.fecha = fecha;
         this.estado = estado;
+        this.tipo = tipo;
         this.clienteNombre = clienteNombre;
+        this.meseroId = meseroId;
         this.meseroNombre = meseroNombre;
+        this.mesaId = mesaId;
+        this.numeroMesa = numeroMesa;
         this.total = total;
         this.detalles = detalles;
     }
 
-    public String getClienteNombre() {
-        return clienteNombre;
-    }
+    public Long getId() { return id; }
 
-    public List<DetallePedidoResponseDTO> getDetalles() {
-        return detalles;
-    }
+    public LocalDateTime getFecha() { return fecha; }
 
-    public String getEstado() {
-        return estado;
-    }
+    public String getEstado() { return estado; }
 
-    public LocalDateTime getFecha() {
-        return fecha;
-    }
+    public String getTipo() { return tipo; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getClienteNombre() { return clienteNombre; }
 
-    public String getMeseroNombre() {
-        return meseroNombre;
-    }
+    public Long getMeseroId() { return meseroId; }
 
-    public BigDecimal getTotal() {
-        return total;
-    }
+    public String getMeseroNombre() { return meseroNombre; }
+
+    public Long getMesaId() { return mesaId; }
+
+    public Integer getNumeroMesa() { return numeroMesa; }
+
+    public BigDecimal getTotal() { return total; }
+
+    public List<DetallePedidoResponseDTO> getDetalles() { return detalles; }
 }
-

@@ -6,6 +6,8 @@ public class PedidoCreateDTO {
 
     private Long clienteId;
     private Long meseroId;
+    private Long mesaId;
+    private String Tipo;
     private List<DetallePedidoCreateDTO> detalles;
 
     public PedidoCreateDTO() {}
@@ -19,6 +21,22 @@ public class PedidoCreateDTO {
     public List<DetallePedidoCreateDTO> getDetalles() { return detalles; }
     public void setDetalles(List<DetallePedidoCreateDTO> detalles) {
         this.detalles = detalles;
+    }
+
+    public Long getMesaId() {
+        return mesaId;
+    }
+
+    public void setMesaId(Long mesaId) {
+        this.mesaId = mesaId;
+    }
+
+    public String getTipo() {
+        return Tipo;
+    }
+
+    public void setTipo(String tipo) {
+        Tipo = tipo;
     }
 }
 

@@ -12,9 +12,6 @@ import java.util.stream.Collectors;
 @Component
 public class PedidoMapper {
 
-    // =========================
-    // Entity → ResponseDTO
-    // =========================
     public PedidoResponseDTO toDTO(Pedido pedido) {
 
         if (pedido == null) {
@@ -34,16 +31,24 @@ public class PedidoMapper {
                 pedido.getId(),
                 pedido.getFecha(),
                 pedido.getEstado() != null ? pedido.getEstado().name() : null,
+                pedido.getTipo() != null ? pedido.getTipo().name() : null, // 🔥 NUEVO
+
+                // cliente (solo si existe)
                 pedido.getCliente() != null ? pedido.getCliente().getNombre() : null,
+
+                // mesero
+                pedido.getMesero() != null ? pedido.getMesero().getId() : null,
                 pedido.getMesero() != null ? pedido.getMesero().getNombre() : null,
+
+                // mesa (solo si existe)
+                pedido.getMesa() != null ? pedido.getMesa().getId() : null,
+                pedido.getMesa() != null ? pedido.getMesa().getNumero() : null,
+
                 pedido.getTotal(),
                 detallesDTO
         );
     }
 
-    // =========================
-    // Detalle Entity → DTO
-    // =========================
     private DetallePedidoResponseDTO detalleToDTO(DetallePedido detalle) {
 
         return new DetallePedidoResponseDTO(
