@@ -9,6 +9,7 @@ import com.marymar.app.persistence.DAO.PedidoDAO;
 import com.marymar.app.persistence.DAO.PersonaDAO;
 import com.marymar.app.persistence.Entity.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -117,6 +118,7 @@ public class MesaServiceImpl implements MesaService {
     // CANCELAR MESA (CLIENTE SE VA)
     // =========================
     @Override
+    @Transactional
     public MesaResponseDTO cancelarMesa(Long mesaId) {
 
         Mesa mesa = mesaDAO.obtenerEntidad(mesaId);
@@ -124,12 +126,10 @@ public class MesaServiceImpl implements MesaService {
         Pedido pedido = pedidoDAO.obtenerPedidoActivoPorMesa(mesaId);
 
         if (pedido != null) {
-            pedido.setEstado(EstadoPedido.CANCELADO);
-            pedidoDAO.actualizar(pedido);
+            pedidoDAO.eliminar(pedido.getId());
         }
 
-        mesa.setEstado(EstadoMesa.DISPONIBLE
-        );
+        mesa.setEstado(EstadoMesa.DISPONIBLE);
         mesa.setMeseroAsignado(null);
 
         return mesaDAO.actualizar(mesa);

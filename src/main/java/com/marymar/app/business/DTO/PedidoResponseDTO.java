@@ -22,6 +22,8 @@ public class PedidoResponseDTO {
 
     private BigDecimal total;
     private List<DetallePedidoResponseDTO> detalles;
+    private PagoResponseDTO pago;
+
 
     public PedidoResponseDTO() {}
 
@@ -35,7 +37,8 @@ public class PedidoResponseDTO {
                              Long mesaId,
                              Integer numeroMesa,
                              BigDecimal total,
-                             List<DetallePedidoResponseDTO> detalles) {
+                             List<DetallePedidoResponseDTO> detalles,
+                             PagoResponseDTO pago) {
 
         this.id = id;
         this.fecha = fecha;
@@ -48,6 +51,7 @@ public class PedidoResponseDTO {
         this.numeroMesa = numeroMesa;
         this.total = total;
         this.detalles = detalles;
+        this.pago =pago;
     }
 
     public Long getId() { return id; }
@@ -71,4 +75,6 @@ public class PedidoResponseDTO {
     public BigDecimal getTotal() { return total; }
 
     public List<DetallePedidoResponseDTO> getDetalles() { return detalles; }
+
+    public PagoResponseDTO getPago() {return pago;}
 }

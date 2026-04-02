@@ -2,8 +2,13 @@ package com.marymar.app.controller;
 
 import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
+import com.marymar.app.business.Service.AuditoriaService;
 import com.marymar.app.business.Service.AuthService;
 import com.marymar.app.business.Service.PasswordRecoveryService;
+import com.marymar.app.configuration.Security.JwtService;
+import com.marymar.app.persistence.Entity.Persona;
+import com.marymar.app.persistence.Repository.PersonaRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +20,17 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuditoriaService auditoriaService;
     private final PasswordRecoveryService passwordRecoveryService;
+    private final JwtService jwtService;
+    private final PersonaRepository personaRepository;
 
-    public AuthController(AuthService authService, PasswordRecoveryService passwordRecoveryService) {
+    public AuthController(AuthService authService, AuditoriaService auditoriaService, PasswordRecoveryService passwordRecoveryService, JwtService jwtService, PersonaRepository personaRepository) {
         this.authService = authService;
+        this.auditoriaService = auditoriaService;
         this.passwordRecoveryService = passwordRecoveryService;
+        this.jwtService = jwtService;
+        this.personaRepository = personaRepository;
     }
 
     // ============================
@@ -118,5 +129,31 @@ public class AuthController {
             return ResponseEntity.status(400)
                     .body(Map.of("message", e.getMessage()));
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+
+        String authHeader = request.getHeader("Authorization");
+
+        String email = null;
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            email = jwtService.extractUsername(token);
+        }
+
+        Persona persona = personaRepository.findByEmail(email)
+                .orElse(null);
+
+        auditoriaService.registrar(
+                "LOGOUT",
+                "USUARIO",
+                persona != null ? persona.getId() : null,
+                "Cierre de sesión de: " + email,
+                email
+        );
+
+        return ResponseEntity.ok().build();
     }
 }

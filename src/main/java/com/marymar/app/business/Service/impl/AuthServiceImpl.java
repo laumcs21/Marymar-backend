@@ -5,6 +5,7 @@ import com.marymar.app.business.DTO.LoginRequestDTO;
 import com.marymar.app.business.DTO.PersonaResponseDTO;
 import com.marymar.app.business.DTO.RegisterRequestDTO;
 import com.marymar.app.business.Exception.CredencialesInvalidasException;
+import com.marymar.app.business.Service.AuditoriaService;
 import com.marymar.app.business.Service.AuthService;
 import com.marymar.app.business.Service.PersonaService;
 import com.marymar.app.business.Service.RecaptchaService;
@@ -14,6 +15,8 @@ import com.marymar.app.persistence.DAO.PersonaDAO;
 import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Entity.Rol;
 import com.marymar.app.persistence.Repository.PersonaRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,8 +35,9 @@ public class AuthServiceImpl implements AuthService {
     private final GeneradorCodigo generadorCodigo;
     private final AuthenticationManager authenticationManager;
     private final RecaptchaService recaptchaService;
+    private final AuditoriaService auditoriaService;
 
-    public AuthServiceImpl(PersonaRepository personaRepository, PersonaDAO personaDAO, PersonaService personaService, PasswordEncoder passwordEncoder, JwtService jwtService, GeneradorCodigo generadorCodigo, AuthenticationManager authenticationManager, RecaptchaService recaptchaService) {
+    public AuthServiceImpl(PersonaRepository personaRepository, PersonaDAO personaDAO, PersonaService personaService, PasswordEncoder passwordEncoder, JwtService jwtService, GeneradorCodigo generadorCodigo, AuthenticationManager authenticationManager, RecaptchaService recaptchaService, AuditoriaService auditoriaService) {
         this.personaRepository = personaRepository;
         this.personaService = personaService;
         this.personaDAO = personaDAO;
@@ -42,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
         this.generadorCodigo = generadorCodigo;
         this.authenticationManager = authenticationManager;
         this.recaptchaService = recaptchaService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Override
@@ -114,13 +119,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         try {
-
+            Authentication auth =
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
                             request.getContrasena()
                     )
             );
+
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
             persona.setIntentosFallidos(0);
             persona.setBloqueadoHasta(null);
@@ -152,7 +159,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         generadorCodigo.generarCodigo(persona.getEmail());
-
+        auditoriaService.registrar(
+                "LOGIN",
+                "USUARIO",
+                persona.getId(),
+                "Inicio de sesión",
+                null
+        );
         return new AuthResponseDTO(
                 persona.getNombre(),
                 persona.getRol(),

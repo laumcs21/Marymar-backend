@@ -4,15 +4,13 @@ import com.marymar.app.business.DTO.InventarioCreateDTO;
 import com.marymar.app.business.DTO.InventarioResponseDTO;
 import com.marymar.app.business.DTO.InventarioUpdateDTO;
 import com.marymar.app.business.Service.InventarioService;
-import com.marymar.app.persistence.Entity.Insumo;
-import com.marymar.app.persistence.Entity.Inventario;
-import com.marymar.app.persistence.Entity.ProductoInsumo;
+import com.marymar.app.persistence.Entity.*;
 import com.marymar.app.persistence.Mapper.InventarioMapper;
-import com.marymar.app.persistence.Repository.InsumoRepository;
-import com.marymar.app.persistence.Repository.InventarioRepository;
-import com.marymar.app.persistence.Repository.ProductoInsumoRepository;
+import com.marymar.app.persistence.Repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,15 +22,19 @@ public class InventarioServiceImpl implements InventarioService {
     private final InsumoRepository insumoRepository;
     private final InventarioMapper inventarioMapper;
     private final ProductoInsumoRepository productoInsumoRepository;
+    private final ProductoRepository productoRepository;
+    private final ConsumoInventarioRepository consumoInventarioRepository;
 
     public InventarioServiceImpl(
             InventarioRepository inventarioRepository,
             InsumoRepository insumoRepository,
-            InventarioMapper inventarioMapper, ProductoInsumoRepository productoInsumoRepository) {
+            InventarioMapper inventarioMapper, ProductoInsumoRepository productoInsumoRepository, ProductoRepository productoRepository, ConsumoInventarioRepository consumoInventarioRepository) {
         this.inventarioRepository = inventarioRepository;
         this.insumoRepository = insumoRepository;
         this.inventarioMapper = inventarioMapper;
         this.productoInsumoRepository = productoInsumoRepository;
+        this.productoRepository = productoRepository;
+        this.consumoInventarioRepository = consumoInventarioRepository;
     }
 
     @Override
@@ -59,6 +61,7 @@ public class InventarioServiceImpl implements InventarioService {
         return inventarioMapper.toDTO(inventario);
     }
 
+    @Transactional
     @Override
     public InventarioResponseDTO actualizar(Long id, InventarioUpdateDTO dto) {
 
@@ -73,6 +76,13 @@ public class InventarioServiceImpl implements InventarioService {
 
         inventarioRepository.save(inventario);
 
+        try {
+            actualizarDisponibilidadProductos(inventario.getInsumo().getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            throw e;
+        }
         return inventarioMapper.toDTO(inventario);
     }
 
@@ -124,5 +134,122 @@ public class InventarioServiceImpl implements InventarioService {
 
         inventarioRepository.delete(inventario);
 
+    }
+
+    @Override
+    public void validarStockPedido(Pedido pedido) {
+
+        for (DetallePedido d : pedido.getDetalles()) {
+
+            List<ProductoInsumo> receta =
+                    productoInsumoRepository.findByProductoId(d.getProducto().getId());
+
+            for (ProductoInsumo pi : receta) {
+
+                Long insumoId = pi.getInsumo().getId();
+                int consumo = pi.getCantidad() * d.getCantidad();
+
+                Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
+                        .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+
+                if (inventario.getStock() < consumo) {
+                    throw new IllegalArgumentException(
+                            "Stock insuficiente de " + pi.getInsumo().getNombre()
+                    );
+                }
+            }
+        }
+    }
+
+    @Override
+    public void descontarStockPedido(Pedido pedido) {
+
+        for (DetallePedido d : pedido.getDetalles()) {
+
+            List<ProductoInsumo> receta =
+                    productoInsumoRepository.findByProductoId(d.getProducto().getId());
+
+            for (ProductoInsumo pi : receta) {
+
+                Long insumoId = pi.getInsumo().getId();
+                int consumo = pi.getCantidad() * d.getCantidad();
+
+                Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
+                        .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+
+                inventario.setStock(inventario.getStock() - consumo);
+                inventarioRepository.save(inventario);
+                actualizarDisponibilidadProductos(insumoId);
+
+                ConsumoInventario registro = new ConsumoInventario(
+                        pedido.getId(),
+                        insumoId,
+                        consumo,
+                        LocalDateTime.now()
+                );
+
+                consumoInventarioRepository.save(registro);
+            }
+        }
+    }
+
+    @Override
+    public void validarStockProductoPedido(Long productoId, int cantidad) {
+
+        List<ProductoInsumo> receta =
+                productoInsumoRepository.findByProductoId(productoId);
+
+        if (receta.isEmpty()) {
+            throw new IllegalStateException("El producto no tiene receta configurada");
+        }
+
+        for (ProductoInsumo pi : receta) {
+
+            Long insumoId = pi.getInsumo().getId();
+            int consumo = pi.getCantidad() * cantidad;
+
+            Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
+                    .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+
+            if (inventario.getStock() < consumo) {
+                throw new IllegalArgumentException(
+                        "No hay suficiente stock de " + pi.getInsumo().getNombre()
+                );
+            }
+        }
+    }
+
+    @Override
+    public void actualizarDisponibilidadProductos(Long insumoId) {
+
+        List<ProductoInsumo> relaciones =
+                productoInsumoRepository.findByInsumoId(insumoId);
+
+        for (ProductoInsumo pi : relaciones) {
+
+            Long productoId = pi.getProducto().getId();
+
+            Producto producto = productoRepository.findById(productoId)
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+            List<ProductoInsumo> receta =
+                    productoInsumoRepository.findByProductoId(producto.getId());
+
+            boolean disponible = true;
+
+            for (ProductoInsumo r : receta) {
+
+                Optional<Inventario> invOpt = inventarioRepository
+                        .findByInsumoId(r.getInsumo().getId());
+
+                if (invOpt.isEmpty() || invOpt.get().getStock() <= 0) {
+                    disponible = false;
+                    break;
+                }
+            }
+
+            producto.setActivo(disponible);
+            productoRepository.save(producto);
+        }
     }
 }

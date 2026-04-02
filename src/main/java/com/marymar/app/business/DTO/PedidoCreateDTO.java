@@ -7,7 +7,7 @@ public class PedidoCreateDTO {
     private Long clienteId;
     private Long meseroId;
     private Long mesaId;
-    private String Tipo;
+    private String tipo;
     private List<DetallePedidoCreateDTO> detalles;
 
     public PedidoCreateDTO() {}
@@ -32,11 +32,11 @@ public class PedidoCreateDTO {
     }
 
     public String getTipo() {
-        return Tipo;
+        return tipo;
     }
 
     public void setTipo(String tipo) {
-        Tipo = tipo;
+        tipo = tipo;
     }
 }
 

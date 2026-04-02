@@ -1,6 +1,7 @@
 package com.marymar.app.persistence.DAO;
 
 import com.marymar.app.business.DTO.PedidoResponseDTO;
+import com.marymar.app.persistence.Entity.EstadoPedido;
 import com.marymar.app.persistence.Entity.Pedido;
 import com.marymar.app.persistence.Mapper.PedidoMapper;
 import com.marymar.app.persistence.Repository.PedidoRepository;
@@ -83,10 +84,13 @@ public class PedidoDAO {
     }
 
     public Pedido obtenerPedidoActivoPorMesa(Long mesaId) {
-
-        return repository.findByMesaIdAndEstado(
+        return repository.findFirstByMesaIdAndEstadoNotIn(
                 mesaId,
-                com.marymar.app.persistence.Entity.EstadoPedido.CREADO
+                List.of(EstadoPedido.PAGADO, EstadoPedido.CANCELADO)
         ).orElse(null);
+    }
+
+    public void eliminar(Long id) {
+        repository.deleteById(id);
     }
 }

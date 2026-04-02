@@ -9,6 +9,7 @@ public class DetallePedidoResponseDTO {
     private Integer cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal subtotal;
+    private Long productoId;
 
     public DetallePedidoResponseDTO() {}
 
@@ -16,12 +17,14 @@ public class DetallePedidoResponseDTO {
                                     String productoNombre,
                                     Integer cantidad,
                                     BigDecimal precioUnitario,
-                                    BigDecimal subtotal) {
+                                    BigDecimal subtotal,
+                                    Long productoId) {
         this.id = id;
         this.productoNombre = productoNombre;
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;
         this.subtotal = subtotal;
+        this.productoId = productoId;
     }
 
     public Long getId() {
@@ -42,5 +45,33 @@ public class DetallePedidoResponseDTO {
 
     public BigDecimal getSubtotal() {
         return subtotal;
+    }
+
+    public Long getProductoId() {
+        return productoId;
+    }
+
+    public void setProductoId(Long productoId) {
+        this.productoId = productoId;
+    }
+
+    public void setCantidad(Integer cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setPrecioUnitario(BigDecimal precioUnitario) {
+        this.precioUnitario = precioUnitario;
+    }
+
+    public void setProductoNombre(String productoNombre) {
+        this.productoNombre = productoNombre;
+    }
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
     }
 }

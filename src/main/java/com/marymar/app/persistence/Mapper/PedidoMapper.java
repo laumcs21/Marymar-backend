@@ -12,6 +12,12 @@ import java.util.stream.Collectors;
 @Component
 public class PedidoMapper {
 
+    private final PagoMapper pagoMapper;
+
+    public PedidoMapper(PagoMapper pagoMapper) {
+        this.pagoMapper = pagoMapper;
+    }
+
     public PedidoResponseDTO toDTO(Pedido pedido) {
 
         if (pedido == null) {
@@ -27,6 +33,7 @@ public class PedidoMapper {
                     .collect(Collectors.toList());
         }
 
+        var pagoDTO = pagoMapper.toDTO(pedido.getPago());
         return new PedidoResponseDTO(
                 pedido.getId(),
                 pedido.getFecha(),
@@ -45,7 +52,8 @@ public class PedidoMapper {
                 pedido.getMesa() != null ? pedido.getMesa().getNumero() : null,
 
                 pedido.getTotal(),
-                detallesDTO
+                detallesDTO,
+                pagoDTO
         );
     }
 
@@ -56,7 +64,8 @@ public class PedidoMapper {
                 detalle.getProducto().getNombre(),
                 detalle.getCantidad(),
                 detalle.getPrecioUnitario(),
-                detalle.getSubtotal()
+                detalle.getSubtotal(),
+                detalle.getProducto().getId()
         );
     }
 }

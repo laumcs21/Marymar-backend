@@ -38,6 +38,9 @@ public class Pedido {
     @Column(nullable = false)
     private TipoPedido tipo;
 
+    @OneToOne(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Pago pago;
+
     @OneToMany(mappedBy = "pedido",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
@@ -65,15 +68,52 @@ public class Pedido {
     }
 
     public void agregarDetalle(DetallePedido detalle) {
-        detalles.add(detalle);
         detalle.setPedido(this);
+        detalles.add(detalle);
         calcularTotal();
     }
 
     public void calcularTotal() {
         this.total = detalles.stream()
-                .map(DetallePedido::getSubtotal)
+                .map(d -> d.getSubtotal() != null ? d.getSubtotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+
+    public void agregarOActualizarDetalle(Producto producto, int cantidad) {
+
+        if (cantidad == 0) return;
+
+        for (DetallePedido d : detalles) {
+
+            if (d.getProducto().getId().equals(producto.getId())) {
+
+                int nuevaCantidad = d.getCantidad() + cantidad;
+
+                if (nuevaCantidad <= 0) {
+                    eliminarDetalle(d);
+                } else {
+                    d.setCantidad(nuevaCantidad);
+                }
+
+                calcularTotal();
+                return;
+            }
+        }
+
+        if (cantidad > 0) {
+            DetallePedido nuevo = new DetallePedido(producto, cantidad);
+            nuevo.setPedido(this);
+            detalles.add(nuevo);
+        }
+
+        calcularTotal();
+    }
+
+    public void eliminarDetalle(DetallePedido detalle) {
+        detalles.remove(detalle);
+        detalle.setPedido(null);
+        calcularTotal();
     }
 
     public Long getId() { return id; }
@@ -98,4 +138,12 @@ public class Pedido {
     public List<DetallePedido> getDetalles() { return detalles; }
 
     public BigDecimal getTotal() { return total; }
+
+    public Pago getPago() { return pago; }
+    public void setPago(Pago pago) {
+        this.pago = pago;
+        if (pago != null) {
+            pago.setPedido(this);
+        }
+    }
 }

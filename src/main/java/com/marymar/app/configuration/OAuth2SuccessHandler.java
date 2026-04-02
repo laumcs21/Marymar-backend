@@ -1,5 +1,6 @@
 package com.marymar.app.configuration;
 
+import com.marymar.app.business.Service.AuditoriaService;
 import com.marymar.app.configuration.Security.JwtService;
 import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Entity.Rol;
@@ -23,16 +24,18 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final JwtService jwtService;
     private final PersonaRepository personaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
     @Value("${app.frontend.url}")
     private String FRONT_URL;
     public OAuth2SuccessHandler(
             JwtService jwtService,
             PersonaRepository personaRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder, AuditoriaService auditoriaService
     ) {
         this.jwtService = jwtService;
         this.personaRepository = personaRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditoriaService = auditoriaService;
     }
 
     @Override
@@ -74,6 +77,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 .toUriString();
 
         System.out.println("ATTRIBUTES: " + oAuth2User.getAttributes());
+        auditoriaService.registrar(
+                "LOGIN",
+                "USUARIO",
+                persona.getId(),
+                "Inicio de sesión",
+                email
+        );
         response.sendRedirect(redirectUrl);
     }
 }

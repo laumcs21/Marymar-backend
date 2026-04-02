@@ -66,7 +66,7 @@ public class PersonaController {
     // ADMIN: ACTUALIZAR CUALQUIERA
     // =========================
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('MESERO') or hasRole('CLIENTE')")
     public ResponseEntity<PersonaResponseDTO> actualizar(
             @PathVariable Long id,
             @RequestBody PersonaCreateDTO dto

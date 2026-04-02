@@ -55,6 +55,18 @@ public class Inventario {
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
 
     public LocalDateTime getFechaModificacion() { return fechaModificacion; }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public void setFechaModificacion(LocalDateTime fechaModificacion) {
+        this.fechaModificacion = fechaModificacion;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 }
 
 

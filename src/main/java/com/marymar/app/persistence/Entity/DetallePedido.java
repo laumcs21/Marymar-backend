@@ -52,11 +52,11 @@ public class DetallePedido {
     public Integer getCantidad() { return cantidad; }
     public void setCantidad(Integer cantidad) {
         this.cantidad = cantidad;
-        if (this.precioUnitario != null) {
+
+        if (this.precioUnitario != null && cantidad != null) {
             this.subtotal = this.precioUnitario.multiply(BigDecimal.valueOf(cantidad));
         }
     }
-
     public BigDecimal getPrecioUnitario() {
         return precioUnitario;
     }
