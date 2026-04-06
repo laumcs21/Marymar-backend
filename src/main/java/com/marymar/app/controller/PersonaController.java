@@ -4,7 +4,9 @@ import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
 import com.marymar.app.business.DTO.PersonaCreateDTO;
 import com.marymar.app.business.DTO.PersonaResponseDTO;
 import com.marymar.app.business.DTO.RegisterRequestDTO;
+import com.marymar.app.business.Service.AuditoriaService;
 import com.marymar.app.business.Service.PersonaService;
+import com.marymar.app.persistence.Entity.Auditoria;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +20,7 @@ import java.util.List;
 public class PersonaController {
 
     private final PersonaService personaService;
+
 
     public PersonaController(PersonaService personaService) {
         this.personaService = personaService;

@@ -14,6 +14,9 @@ import com.marymar.app.persistence.Repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @Transactional
 public class PedidoServiceImpl implements PedidoService {
@@ -301,4 +304,22 @@ public class PedidoServiceImpl implements PedidoService {
 
         return pedidoDAO.actualizar(pedido);
     }
+
+    @Override
+    public List<PedidoResponseDTO> filtrar(String fechaInicio, String fechaFin, String estado) {
+
+        LocalDateTime inicio = (fechaInicio != null && !fechaInicio.isEmpty())
+                ? LocalDateTime.parse(fechaInicio)
+                : null;
+
+        LocalDateTime fin = (fechaFin != null && !fechaFin.isEmpty())
+                ? LocalDateTime.parse(fechaFin)
+                : null;
+
+        EstadoPedido estadoEnum = (estado != null && !estado.isEmpty())
+                ? EstadoPedido.valueOf(estado.toUpperCase())
+                : null;
+
+        return pedidoDAO.filtrar(inicio, fin, estadoEnum);
     }
+}

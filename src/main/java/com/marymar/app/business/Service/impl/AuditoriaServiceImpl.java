@@ -7,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class AuditoriaServiceImpl implements AuditoriaService {
@@ -38,5 +39,27 @@ public class AuditoriaServiceImpl implements AuditoriaService {
         log.setFecha(LocalDateTime.now());
 
         auditoriaRepository.save(log);
+    }
+
+    @Override
+    public List<Auditoria> obtenerTodosOrdenados() {
+        return auditoriaRepository.findAllByOrderByFechaDesc();
+    }
+
+    @Override
+    public List<Auditoria> filtrar(
+            String usuario,
+            String accion,
+            String entidad,
+            LocalDateTime fechaInicio,
+            LocalDateTime fechaFin
+    ) {
+        return auditoriaRepository.filtrar(
+                usuario,
+                accion,
+                entidad,
+                fechaInicio,
+                fechaFin
+        );
     }
 }

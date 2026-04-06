@@ -9,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -92,5 +93,18 @@ public class PedidoDAO {
 
     public void eliminar(Long id) {
         repository.deleteById(id);
+    }
+
+    public List<PedidoResponseDTO> filtrar(LocalDateTime inicio, LocalDateTime fin, EstadoPedido estado) {
+
+        List<Pedido> pedidos = repository.findAll();
+
+        return pedidos.stream()
+                .filter(p -> inicio == null || !p.getFecha().isBefore(inicio))
+                .filter(p -> fin == null || !p.getFecha().isAfter(fin))
+                .filter(p -> estado == null || p.getEstado() == estado)
+                .sorted((a, b) -> b.getFecha().compareTo(a.getFecha())) // ordenar desc
+                .map(mapper::toDTO)
+                .toList();
     }
 }

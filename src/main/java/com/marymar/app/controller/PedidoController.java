@@ -35,25 +35,25 @@ public class PedidoController {
         return ResponseEntity.ok(pedidoService.crearPedido(dto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO')")
     @GetMapping("/{id}")
     public ResponseEntity<PedidoResponseDTO> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(pedidoService.obtenerPorId(id));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO')")
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<List<PedidoResponseDTO>> obtenerPorCliente(@PathVariable Long clienteId) {
         return ResponseEntity.ok(pedidoService.obtenerPorCliente(clienteId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','CLIENTE','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO')")
     @GetMapping
     public ResponseEntity<List<PedidoResponseDTO>> obtenerTodos() {
         return ResponseEntity.ok(pedidoService.obtenerTodos());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','MESERO')")
     @PutMapping("/{id}/estado")
     public ResponseEntity<PedidoResponseDTO> cambiarEstado(
             @PathVariable Long id,
@@ -189,5 +189,15 @@ public class PedidoController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=comanda.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(baos.toByteArray());
+    }
+
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public List<PedidoResponseDTO> filtrar(
+            @RequestParam(required = false) String fechaInicio,
+            @RequestParam(required = false) String fechaFin,
+            @RequestParam(required = false) String estado
+    ) {
+        return pedidoService.filtrar(fechaInicio, fechaFin, estado);
     }
 }
