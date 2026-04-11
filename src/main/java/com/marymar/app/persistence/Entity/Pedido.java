@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "pedido")
@@ -145,5 +146,13 @@ public class Pedido {
         if (pago != null) {
             pago.setPedido(this);
         }
+    }
+
+    public String obtenerResumen() {
+        return detalles.stream()
+                .map(d -> d.getProducto().getNombre() +
+                        " x" + d.getCantidad() +
+                        " ($" + d.getSubtotal() + ")")
+                .collect(Collectors.joining(", "));
     }
 }

@@ -4,6 +4,7 @@ import com.marymar.app.business.DTO.CategoriaCreateDTO;
 import com.marymar.app.business.DTO.ProductoCreateDTO;
 import com.marymar.app.business.DTO.ProductoResponseDTO;
 import com.marymar.app.business.Service.CategoriaService;
+import com.marymar.app.business.Service.GoogleIdTokenService;
 import com.marymar.app.business.Service.ImageService;
 import com.marymar.app.business.Service.ProductoService;
 import com.marymar.app.persistence.Entity.Producto;
@@ -42,6 +43,9 @@ class ProductoServiceIntegrationTest {
     private ProductoRepository productoRepository;
     @Autowired
     private EntityManager entityManager;
+
+    @MockitoBean
+    private GoogleIdTokenService googleIdTokenService;
 
     @Test
     void deberiaCrearProductoCorrectamente() {

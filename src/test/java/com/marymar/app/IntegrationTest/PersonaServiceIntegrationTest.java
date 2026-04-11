@@ -2,6 +2,7 @@ package com.marymar.app.IntegrationTest;
 
 import com.marymar.app.business.DTO.PersonaCreateDTO;
 import com.marymar.app.business.DTO.PersonaResponseDTO;
+import com.marymar.app.business.Service.GoogleIdTokenService;
 import com.marymar.app.business.Service.PersonaService;
 import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Entity.Rol;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -31,6 +33,8 @@ class PersonaServiceIntegrationTest {
     private EntityManager entityManager;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @MockitoBean
+    private GoogleIdTokenService googleIdTokenService;
 
     @Test
     void deberiaCrearPersonaYPersistirEnBD() {

@@ -4,6 +4,7 @@ import com.marymar.app.business.DTO.CategoriaCreateDTO;
 import com.marymar.app.business.DTO.CategoriaResponseDTO;
 import com.marymar.app.business.DTO.ProductoCreateDTO;
 import com.marymar.app.business.Service.CategoriaService;
+import com.marymar.app.business.Service.GoogleIdTokenService;
 import com.marymar.app.business.Service.ImageService;
 import com.marymar.app.business.Service.ProductoService;
 import com.marymar.app.persistence.Entity.Categoria;
@@ -37,6 +38,8 @@ class CategoriaServiceIntegrationTest {
     private CategoriaRepository categoriaRepository;
     @Autowired
     private EntityManager entityManager;
+    @MockitoBean
+    private GoogleIdTokenService googleIdTokenService;
 
     @Test
     void deberiaCrearCategoriaCorrectamente() {

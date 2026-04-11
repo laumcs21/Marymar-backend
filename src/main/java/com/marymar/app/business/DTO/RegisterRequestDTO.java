@@ -16,12 +16,40 @@ public class RegisterRequestDTO {
     private Boolean aceptaHabeasData;
     private String captchaToken;
 
+    /**
+     * WEB o ANDROID
+     * Si viene null o vacío, se mantiene el comportamiento actual (WEB).
+     */
+    private String captchaClient;
+
+    /**
+     * Acción esperada para Android reCAPTCHA Enterprise.
+     * Ej: REGISTER
+     */
+    private String captchaAction;
+
     public String getCaptchaToken() {
         return captchaToken;
     }
 
     public void setCaptchaToken(String captchaToken) {
         this.captchaToken = captchaToken;
+    }
+
+    public String getCaptchaClient() {
+        return captchaClient;
+    }
+
+    public void setCaptchaClient(String captchaClient) {
+        this.captchaClient = captchaClient;
+    }
+
+    public String getCaptchaAction() {
+        return captchaAction;
+    }
+
+    public void setCaptchaAction(String captchaAction) {
+        this.captchaAction = captchaAction;
     }
 
     public String getContrasena() {
@@ -88,4 +116,3 @@ public class RegisterRequestDTO {
         this.aceptaHabeasData = aceptaHabeasData;
     }
 }
-

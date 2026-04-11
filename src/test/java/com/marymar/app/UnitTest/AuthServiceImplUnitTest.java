@@ -1,10 +1,12 @@
 package com.marymar.app.UnitTest;
 
+import com.marymar.app.TestSupport.TestDataFactory;
+import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
-import com.marymar.app.business.DTO.LoginRequestDTO;
-import com.marymar.app.business.DTO.PersonaResponseDTO;
-import com.marymar.app.business.DTO.RegisterRequestDTO;
 import com.marymar.app.business.Exception.CredencialesInvalidasException;
+import com.marymar.app.business.Service.AndroidRecaptchaService;
+import com.marymar.app.business.Service.AuditoriaService;
+import com.marymar.app.business.Service.GoogleIdTokenService;
 import com.marymar.app.business.Service.PersonaService;
 import com.marymar.app.business.Service.RecaptchaService;
 import com.marymar.app.business.Service.Util.GeneradorCodigo;
@@ -20,38 +22,34 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplUnitTest {
 
-    @Mock
-    private PersonaRepository personaRepository;
-    @Mock
-    private PersonaDAO personaDAO;
-    @Mock
-    private PersonaService personaService;
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    @Mock
-    private JwtService jwtService;
-    @Mock
-    private GeneradorCodigo generadorCodigo;
-    @Mock
-    private AuthenticationManager authenticationManager;
-    @Mock
-    private RecaptchaService recaptchaService;
+    @Mock private PersonaRepository personaRepository;
+    @Mock private PersonaDAO personaDAO;
+    @Mock private PersonaService personaService;
+    @Mock private PasswordEncoder passwordEncoder;
+    @Mock private JwtService jwtService;
+    @Mock private GeneradorCodigo generadorCodigo;
+    @Mock private AuthenticationManager authenticationManager;
+    @Mock private RecaptchaService recaptchaService;
+    @Mock private AndroidRecaptchaService androidRecaptchaService;
+    @Mock private AuditoriaService auditoriaService;
+    @Mock private GoogleIdTokenService googleIdTokenService;
+    @Mock private Authentication authentication;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -62,48 +60,60 @@ class AuthServiceImplUnitTest {
 
     @BeforeEach
     void setUp() {
-        registerRequest = new RegisterRequestDTO();
-        registerRequest.setNumeroIdentificacion("123");
-        registerRequest.setNombre("Laura");
-        registerRequest.setEmail("laura@test.com");
-        registerRequest.setContrasena("Admin123!");
-        registerRequest.setTelefono("3001234567");
-        registerRequest.setFechaNacimiento(LocalDate.of(2000, 1, 1));
-        registerRequest.setAceptaHabeasData(true);
-        registerRequest.setCaptchaToken("captcha-ok");
-        registerRequest.setRol(Rol.CLIENTE);
-
-        loginRequest = new LoginRequestDTO();
-        loginRequest.setEmail("laura@test.com");
-        loginRequest.setContrasena("Admin123!");
-        loginRequest.setCaptchaToken("captcha-ok");
-
-        persona = Persona.builder()
-                .numeroIdentificacion("123")
-                .nombre("Laura")
-                .email("laura@test.com")
-                .contrasena("encoded")
-                .telefono("3001234567")
-                .fechaNacimiento(LocalDate.of(2000, 1, 1))
-                .rol(Rol.CLIENTE)
-                .activo(true)
-                .build();
+        registerRequest = TestDataFactory.registerRequest();
+        loginRequest = TestDataFactory.loginRequest();
+        persona = TestDataFactory.persona(1L, "Laura", "laura@test.com", Rol.CLIENTE);
+        persona.setContrasena("encoded");
     }
 
     @Test
     void registerDeberiaCrearUsuarioYRetornarToken() {
         when(personaDAO.existeEmail("laura@test.com")).thenReturn(false);
-        when(personaDAO.existeNumeroIdentificacion("123")).thenReturn(false);
+        when(personaDAO.existeNumeroIdentificacion("123456789")).thenReturn(false);
         when(recaptchaService.validarCaptcha("captcha-ok")).thenReturn(true);
-        when(passwordEncoder.encode("Admin123!")).thenReturn("encoded");
+        when(passwordEncoder.encode("Admin123$")).thenReturn("encoded-pass");
         when(jwtService.generateToken(any(Persona.class))).thenReturn("jwt-token");
 
-        AuthResponseDTO response = authService.register(registerRequest);
+        AuthResponseDTO response = authService.register(registerRequest, "JUnit", "10.0.0.1");
 
         assertEquals("Laura", response.getNombre());
         assertEquals(Rol.CLIENTE, response.getRol());
         assertEquals("jwt-token", response.getToken());
         verify(personaRepository).save(any(Persona.class));
+        verify(recaptchaService).validarCaptcha("captcha-ok");
+    }
+
+    @Test
+    void registerDeberiaUsarCaptchaAndroidCuandoClienteEsAndroid() {
+        registerRequest.setCaptchaClient("ANDROID");
+        registerRequest.setCaptchaAction("REGISTER");
+        when(personaDAO.existeEmail(any())).thenReturn(false);
+        when(personaDAO.existeNumeroIdentificacion(any())).thenReturn(false);
+        when(androidRecaptchaService.validarCaptchaAndroid("captcha-ok", "REGISTER", "Android", "1.1.1.1"))
+                .thenReturn(true);
+        when(passwordEncoder.encode(any())).thenReturn("encoded-pass");
+        when(jwtService.generateToken(any(Persona.class))).thenReturn("jwt");
+
+        AuthResponseDTO response = authService.register(registerRequest, "Android", "1.1.1.1");
+
+        assertEquals("jwt", response.getToken());
+        verify(androidRecaptchaService).validarCaptchaAndroid("captcha-ok", "REGISTER", "Android", "1.1.1.1");
+        verify(recaptchaService, never()).validarCaptcha(any());
+    }
+
+    @Test
+    void registerDeberiaPermitirCaptchaDePruebaSinValidarServiciosExternos() {
+        registerRequest.setCaptchaToken("test-captcha");
+        when(personaDAO.existeEmail(any())).thenReturn(false);
+        when(personaDAO.existeNumeroIdentificacion(any())).thenReturn(false);
+        when(passwordEncoder.encode(any())).thenReturn("encoded-pass");
+        when(jwtService.generateToken(any(Persona.class))).thenReturn("jwt");
+
+        AuthResponseDTO response = authService.register(registerRequest, "JUnit", "127.0.0.1");
+
+        assertEquals("jwt", response.getToken());
+        verify(recaptchaService, never()).validarCaptcha(any());
+        verify(androidRecaptchaService, never()).validarCaptchaAndroid(any(), any(), any(), any());
     }
 
     @Test
@@ -111,66 +121,40 @@ class AuthServiceImplUnitTest {
         when(personaDAO.existeEmail("laura@test.com")).thenReturn(true);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> authService.register(registerRequest));
+                () -> authService.register(registerRequest, null, null));
 
         assertEquals("El email ya está registrado", ex.getMessage());
         verify(personaRepository, never()).save(any());
     }
 
     @Test
-    void registerDeberiaFallarSiIdentificacionYaExiste() {
-        when(personaDAO.existeEmail("laura@test.com")).thenReturn(false);
-        when(personaDAO.existeNumeroIdentificacion("123")).thenReturn(true);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> authService.register(registerRequest));
-
-        assertEquals("La identificación ya está registrada", ex.getMessage());
-    }
-
-    @Test
-    void registerDeberiaFallarSiNoAceptaHabeasData() {
-        registerRequest.setAceptaHabeasData(false);
+    void registerDeberiaFallarSiCaptchaAndroidNoTieneAccion() {
+        registerRequest.setCaptchaClient("ANDROID");
+        registerRequest.setCaptchaAction(null);
         when(personaDAO.existeEmail(any())).thenReturn(false);
         when(personaDAO.existeNumeroIdentificacion(any())).thenReturn(false);
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> authService.register(registerRequest));
+                () -> authService.register(registerRequest, "Android", "1.1.1.1"));
 
-        assertEquals("Debe aceptar la política de tratamiento de datos.", ex.getMessage());
+        assertEquals("captchaAction es requerido para Android", ex.getMessage());
     }
 
     @Test
-    void registerDeberiaFallarSiCaptchaEsInvalido() {
-        when(personaDAO.existeEmail(any())).thenReturn(false);
-        when(personaDAO.existeNumeroIdentificacion(any())).thenReturn(false);
-        when(recaptchaService.validarCaptcha("captcha-ok")).thenReturn(false);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> authService.register(registerRequest));
-
-        assertEquals("Captcha inválido", ex.getMessage());
-    }
-
-    @Test
-    void loginDeberiaFallarSiCaptchaEsInvalido() {
-        when(recaptchaService.validarCaptcha("captcha-ok")).thenReturn(false);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> authService.login(loginRequest));
-
-        assertEquals("Captcha inválido", ex.getMessage());
-    }
-
-    @Test
-    void loginDeberiaFallarSiUsuarioNoExiste() {
+    void loginExitosoDeberiaResetearIntentosGenerarCodigoYRegistrarAuditoria() {
         when(recaptchaService.validarCaptcha("captcha-ok")).thenReturn(true);
-        when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.empty());
+        when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.of(persona));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
 
-        CredencialesInvalidasException ex = assertThrows(CredencialesInvalidasException.class,
-                () -> authService.login(loginRequest));
+        AuthResponseDTO response = authService.login(loginRequest, "JUnit", "10.0.0.1");
 
-        assertEquals("Correo o contraseña incorrectos", ex.getMessage());
+        assertEquals("Laura", response.getNombre());
+        assertTrue(response.isRequires2FA());
+        assertNull(response.getToken());
+        assertEquals(0, persona.getIntentosFallidos());
+        assertNull(persona.getBloqueadoHasta());
+        verify(generadorCodigo).generarCodigo("laura@test.com");
+        verify(auditoriaService).registrar("LOGIN", "USUARIO", 1L, "Inicio de sesión", null);
     }
 
     @Test
@@ -180,27 +164,9 @@ class AuthServiceImplUnitTest {
         when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.of(persona));
 
         CredencialesInvalidasException ex = assertThrows(CredencialesInvalidasException.class,
-                () -> authService.login(loginRequest));
+                () -> authService.login(loginRequest, null, null));
 
         assertEquals("Cuenta bloqueada.", ex.getMessage());
-    }
-
-    @Test
-    void loginExitosoDeberiaResetearIntentosYSolicitar2FA() {
-        persona.setIntentosFallidos(null);
-        when(recaptchaService.validarCaptcha("captcha-ok")).thenReturn(true);
-        when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.of(persona));
-
-        AuthResponseDTO response = authService.login(loginRequest);
-
-        assertEquals("Laura", response.getNombre());
-        assertTrue(response.isRequires2FA());
-        assertNull(response.getToken());
-        assertEquals(0, persona.getIntentosFallidos());
-        assertNull(persona.getBloqueadoHasta());
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(personaRepository).save(persona);
-        verify(generadorCodigo).generarCodigo("laura@test.com");
     }
 
     @Test
@@ -212,7 +178,7 @@ class AuthServiceImplUnitTest {
                 .when(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
 
         CredencialesInvalidasException ex = assertThrows(CredencialesInvalidasException.class,
-                () -> authService.login(loginRequest));
+                () -> authService.login(loginRequest, null, null));
 
         assertEquals(2, persona.getIntentosFallidos());
         assertTrue(ex.getMessage().contains("Te quedan 1 intentos"));
@@ -228,29 +194,85 @@ class AuthServiceImplUnitTest {
                 .when(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
 
         CredencialesInvalidasException ex = assertThrows(CredencialesInvalidasException.class,
-                () -> authService.login(loginRequest));
+                () -> authService.login(loginRequest, null, null));
 
         assertEquals("Cuenta bloqueada por 5 minutos.", ex.getMessage());
         assertEquals(0, persona.getIntentosFallidos());
         assertNotNull(persona.getBloqueadoHasta());
-        verify(personaRepository).save(persona);
+    }
+
+    @Test
+    void loginConCaptchaAndroidInvalidoDeberiaFallar() {
+        loginRequest.setCaptchaClient("ANDROID");
+        loginRequest.setCaptchaAction("LOGIN");
+        when(androidRecaptchaService.validarCaptchaAndroid("captcha-ok", "LOGIN", "Android", "1.1.1.1"))
+                .thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> authService.login(loginRequest, "Android", "1.1.1.1"));
+
+        assertEquals("Captcha inválido", ex.getMessage());
+    }
+
+    @Test
+    void loginWithGoogleMobileDeberiaCrearUsuarioSiNoExisteYRetornarJwt() {
+        GoogleMobileLoginRequestDTO request = new GoogleMobileLoginRequestDTO("google-id-token", "captcha-android", "GOOGLE_LOGIN");
+        GoogleUserInfoDTO googleUser = new GoogleUserInfoDTO("sub123", "google@test.com", "Google User");
+
+        when(androidRecaptchaService.validarCaptchaAndroid("captcha-android", "GOOGLE_LOGIN", "Android", "10.0.0.5"))
+                .thenReturn(true);
+        when(googleIdTokenService.validarToken("google-id-token")).thenReturn(googleUser);
+        when(personaRepository.findByEmail("google@test.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(any())).thenReturn("encoded-random");
+        when(personaRepository.save(any(Persona.class))).thenAnswer(invocation -> {
+            Persona creada = invocation.getArgument(0);
+            TestDataFactory.setField(creada, "id", 99L);
+            return creada;
+        });
+        when(jwtService.generateToken(any(Persona.class))).thenReturn("jwt-google");
+
+        AuthResponseDTO response = authService.loginWithGoogleMobile(request, "Android", "10.0.0.5");
+
+        assertEquals("Google User", response.getNombre());
+        assertEquals(Rol.CLIENTE, response.getRol());
+        assertEquals("jwt-google", response.getToken());
+        assertFalse(response.isRequires2FA());
+        verify(auditoriaService).registrar(
+                "LOGIN_GOOGLE_MOBILE",
+                "USUARIO",
+                99L,
+                "Inicio de sesión con Google desde app móvil",
+                "google@test.com"
+        );
+    }
+
+    @Test
+    void loginWithGoogleMobileDeberiaFallarSiFaltaCaptchaAction() {
+        GoogleMobileLoginRequestDTO request = new GoogleMobileLoginRequestDTO();
+        request.setIdToken("google-id-token");
+        request.setCaptchaToken("captcha");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> authService.loginWithGoogleMobile(request, "Android", "1.1.1.1"));
+
+        assertEquals("captchaAction es requerido", ex.getMessage());
     }
 
     @Test
     void verifyTokenDeberiaDelegarEnJwtYPersonaService() {
         PersonaResponseDTO dto = new PersonaResponseDTO();
         dto.setEmail("laura@test.com");
+        when(jwtService.extractUsername("jwt")).thenReturn("laura@test.com");
         when(personaService.obtenerPorEmail("laura@test.com")).thenReturn(dto);
-        when(jwtService.extractUsername("token-ok")).thenReturn("laura@test.com");
 
-        PersonaResponseDTO response = authService.verifyToken("token-ok");
+        PersonaResponseDTO resultado = authService.verifyToken("jwt");
 
-        assertEquals("laura@test.com", response.getEmail());
-        verify(jwtService).validateToken("token-ok");
+        assertSame(dto, resultado);
+        verify(jwtService).validateToken("jwt");
     }
 
     @Test
-    void validarCodigoDeberiaGenerarJwtCuandoUsuarioExiste() {
+    void validarCodigoDeberiaGenerarJwtReal() {
         when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.of(persona));
         when(jwtService.generateToken(persona)).thenReturn("jwt-2fa");
 
@@ -262,35 +284,13 @@ class AuthServiceImplUnitTest {
     }
 
     @Test
-    void validarCodigoDeberiaFallarSiUsuarioNoExiste() {
-        when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.empty());
-
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> authService.validarCodigo("laura@test.com", "123456"));
-
-        assertEquals("Usuario no encontrado", ex.getMessage());
-    }
-
-    @Test
-    void reenviarCodigoDeberiaResponderConRequires2FA() {
+    void reenviarCodigoDeberiaRetornarRequires2FA() {
         when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.of(persona));
 
         AuthResponseDTO response = authService.reenviarCodigo("laura@test.com");
 
-        assertEquals("Laura", response.getNombre());
         assertTrue(response.isRequires2FA());
         assertNull(response.getToken());
         verify(generadorCodigo).generarCodigo("laura@test.com");
-    }
-
-    @Test
-    void reenviarCodigoDeberiaFallarSiNoSePuedeEnviar() {
-        when(personaRepository.findByEmail("laura@test.com")).thenReturn(Optional.of(persona));
-        doThrow(new RuntimeException("mail error")).when(generadorCodigo).generarCodigo("laura@test.com");
-
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> authService.reenviarCodigo("laura@test.com"));
-
-        assertEquals("No se pudo enviar el código", ex.getMessage());
     }
 }

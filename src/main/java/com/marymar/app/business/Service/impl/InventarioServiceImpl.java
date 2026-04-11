@@ -37,6 +37,7 @@ public class InventarioServiceImpl implements InventarioService {
         this.consumoInventarioRepository = consumoInventarioRepository;
     }
 
+    @Transactional
     @Override
     public InventarioResponseDTO crear(InventarioCreateDTO dto) {
 

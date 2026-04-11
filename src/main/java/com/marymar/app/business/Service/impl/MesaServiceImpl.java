@@ -2,6 +2,7 @@ package com.marymar.app.business.Service.impl;
 
 import com.marymar.app.business.DTO.MesaCreateDTO;
 import com.marymar.app.business.DTO.MesaResponseDTO;
+import com.marymar.app.business.Service.AuditoriaService;
 import com.marymar.app.business.Service.MesaService;
 import com.marymar.app.business.Service.PedidoService;
 import com.marymar.app.persistence.DAO.MesaDAO;
@@ -20,15 +21,17 @@ public class MesaServiceImpl implements MesaService {
     private final PedidoDAO pedidoDAO;
     private final PersonaDAO personaDAO;
     private final PedidoService pedidoService;
+    private final AuditoriaService auditoriaService;
 
 
     public MesaServiceImpl(MesaDAO mesaDAO,
                            PedidoDAO pedidoDAO,
-                           PersonaDAO personaDAO, PedidoService pedidoService) {
+                           PersonaDAO personaDAO, PedidoService pedidoService, AuditoriaService auditoriaService) {
         this.mesaDAO = mesaDAO;
         this.pedidoDAO = pedidoDAO;
         this.personaDAO = personaDAO;
         this.pedidoService = pedidoService;
+        this.auditoriaService = auditoriaService;
     }
 
     // =========================
@@ -124,8 +127,19 @@ public class MesaServiceImpl implements MesaService {
         Mesa mesa = mesaDAO.obtenerEntidad(mesaId);
 
         Pedido pedido = pedidoDAO.obtenerPedidoActivoPorMesa(mesaId);
-
         if (pedido != null) {
+
+            String detalle = "Pedido cancelado: " + pedido.obtenerResumen()
+                    + " | Total: $" + pedido.getTotal();
+
+            auditoriaService.registrar(
+                    "CANCELAR_PEDIDO",
+                    "PEDIDO",
+                    pedido.getId(),
+                    detalle,
+                    null
+            );
+
             pedidoDAO.eliminar(pedido.getId());
         }
 

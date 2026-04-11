@@ -9,10 +9,12 @@ import com.marymar.app.persistence.Repository.InsumoRepository;
 import com.marymar.app.persistence.Repository.InventarioRepository;
 import com.marymar.app.persistence.Repository.ProductoInsumoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class InsumoServiceImpl implements InsumoService {
 
     private final InsumoDAO insumoDAO;
@@ -59,16 +61,15 @@ public class InsumoServiceImpl implements InsumoService {
 
         boolean usadoEnReceta = productoInsumoRepository.existsByInsumoId(id);
 
-        if(usadoEnReceta){
+        if (usadoEnReceta) {
             throw new IllegalStateException(
                     "No se puede eliminar el insumo porque está asociado a productos"
             );
         }
 
-        // ELIMINAR INVENTARIO
-        inventarioRepository.deleteByInsumoId(id);
+        inventarioRepository.findByInsumoId(id)
+                .ifPresent(inventarioRepository::delete);
 
-        // ELIMINAR INSUMO
         insumoRepository.delete(insumo);
     }
 

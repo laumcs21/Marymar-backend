@@ -6,6 +6,7 @@ import com.marymar.app.business.DTO.RegisterRequestDTO;
 import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
 import com.marymar.app.business.Exception.CredencialesInvalidasException;
 import com.marymar.app.business.Service.AuthService;
+import com.marymar.app.business.Service.GoogleIdTokenService;
 import com.marymar.app.business.Service.RecaptchaService;
 import com.marymar.app.business.Service.Util.GeneradorCodigo;
 import com.marymar.app.persistence.Entity.Persona;
@@ -40,6 +41,8 @@ class AuthServiceIntegrationTest {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private EntityManager entityManager;
+    @MockitoBean
+    private GoogleIdTokenService googleIdTokenService;
 
     @MockitoBean
     private RecaptchaService recaptchaService;

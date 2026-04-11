@@ -10,7 +10,6 @@ import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Repository.PersonaRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,7 +24,13 @@ public class AuthController {
     private final JwtService jwtService;
     private final PersonaRepository personaRepository;
 
-    public AuthController(AuthService authService, AuditoriaService auditoriaService, PasswordRecoveryService passwordRecoveryService, JwtService jwtService, PersonaRepository personaRepository) {
+    public AuthController(
+            AuthService authService,
+            AuditoriaService auditoriaService,
+            PasswordRecoveryService passwordRecoveryService,
+            JwtService jwtService,
+            PersonaRepository personaRepository
+    ) {
         this.authService = authService;
         this.auditoriaService = auditoriaService;
         this.passwordRecoveryService = passwordRecoveryService;
@@ -33,29 +38,35 @@ public class AuthController {
         this.personaRepository = personaRepository;
     }
 
-    // ============================
-    // REGISTRO DINÁMICO POR ROL
-    // ============================
-
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(@RequestBody RegisterRequestDTO request) {
-
+    public ResponseEntity<AuthResponseDTO> register(
+            @RequestBody RegisterRequestDTO request,
+            HttpServletRequest httpRequest
+    ) {
         if (!request.getAceptaHabeasData()) {
             throw new IllegalArgumentException("Debe aceptar la política de tratamiento de datos.");
         }
 
-        return ResponseEntity.ok(authService.register(request));
+        return ResponseEntity.ok(
+                authService.register(
+                        request,
+                        httpRequest.getHeader("User-Agent"),
+                        extractClientIp(httpRequest)
+                )
+        );
     }
 
-    // ============================
-    // LOGIN
-    // ============================
-
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
-
+    public ResponseEntity<?> login(
+            @RequestBody LoginRequestDTO dto,
+            HttpServletRequest httpRequest
+    ) {
         try {
-            AuthResponseDTO response = authService.login(dto);
+            AuthResponseDTO response = authService.login(
+                    dto,
+                    httpRequest.getHeader("User-Agent"),
+                    extractClientIp(httpRequest)
+            );
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -64,9 +75,25 @@ public class AuthController {
         }
     }
 
-    // ============================
-    // VALIDAR CÓDIGO
-    // ============================
+    @PostMapping("/google/mobile")
+    public ResponseEntity<?> loginGoogleMobile(
+            @RequestBody GoogleMobileLoginRequestDTO dto,
+            HttpServletRequest httpRequest
+    ) {
+        try {
+            AuthResponseDTO response = authService.loginWithGoogleMobile(
+                    dto,
+                    httpRequest.getHeader("User-Agent"),
+                    extractClientIp(httpRequest)
+            );
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/validate-code")
     public ResponseEntity<AuthResponseDTO> validarCodigo(
             @RequestParam String email,
@@ -75,15 +102,10 @@ public class AuthController {
         return ResponseEntity.ok(authService.validarCodigo(email, code));
     }
 
-    // ============================
-    // VERIFY TOKEN (para JWT luego)
-    // ============================
-
     @PostMapping("/verify-token")
     public ResponseEntity<?> verifyToken(@RequestBody Map<String, String> request) {
 
         try {
-
             String token = request.get("token");
 
             if (token == null || token.isEmpty()) {
@@ -105,12 +127,10 @@ public class AuthController {
     public ResponseEntity<?> resendCode(@RequestBody Map<String, String> body) {
 
         String email = body.get("email");
-
         AuthResponseDTO response = authService.reenviarCodigo(email);
 
         return ResponseEntity.ok(response);
     }
-
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequestDTO dto) {
@@ -135,7 +155,6 @@ public class AuthController {
     public ResponseEntity<Void> logout(HttpServletRequest request) {
 
         String authHeader = request.getHeader("Authorization");
-
         String email = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -155,5 +174,13 @@ public class AuthController {
         );
 
         return ResponseEntity.ok().build();
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
