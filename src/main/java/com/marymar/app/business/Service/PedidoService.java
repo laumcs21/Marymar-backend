@@ -15,6 +15,10 @@ public interface PedidoService {
 
     List<PedidoResponseDTO> obtenerPorCliente(Long clienteId);
 
+    Pedido obtenerEntidad(Long id);
+
+    void guardarEntidad(Pedido pedido);
+
     List<PedidoResponseDTO> obtenerTodos();
 
     PedidoResponseDTO cambiarEstado(Long id, String nuevoEstado);
@@ -35,4 +39,6 @@ public interface PedidoService {
     PedidoResponseDTO eliminarDetalle(Long pedidoId, Long detalleId);
 
     List<PedidoResponseDTO> filtrar(String fechaInicio, String fechaFin, String estado);
+
+    List<PedidoResponseDTO> obtenerColaCocina(String estado);
 }

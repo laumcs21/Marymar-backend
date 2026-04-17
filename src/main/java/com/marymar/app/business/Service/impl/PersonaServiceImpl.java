@@ -76,7 +76,7 @@ public class PersonaServiceImpl implements PersonaService {
                     passwordEncoder.encode(dto.getContrasena())
             );
         } else {
-            dto.setContrasena(null); // No actualizar contraseña si viene vacía
+            dto.setContrasena(null);
         }
 
         return personaDAO.actualizar(id, dto);
@@ -214,7 +214,7 @@ public class PersonaServiceImpl implements PersonaService {
 
         int edad = calcularEdad(dto.getFechaNacimiento());
 
-        if ((rol == Rol.MESERO || rol == Rol.ADMINISTRADOR) && edad < 18) {
+        if ((rol == Rol.MESERO || rol == Rol.ADMINISTRADOR || rol == Rol.COCINERO) && edad < 18) {
             throw new IllegalArgumentException("Debe ser mayor de edad para este rol");
         }
 
@@ -224,7 +224,7 @@ public class PersonaServiceImpl implements PersonaService {
             throw new IllegalArgumentException("El cliente debe tener dirección de envío");
         }
 
-        if (rol == Rol.MESERO &&
+        if ((rol == Rol.MESERO ||rol == Rol.COCINERO) &&
                 (dto.getSalario() == null || dto.getSalario() <= 0)) {
             throw new IllegalArgumentException("El mesero debe tener salario válido");
         }

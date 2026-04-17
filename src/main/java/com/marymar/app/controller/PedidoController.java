@@ -9,6 +9,7 @@ import com.marymar.app.business.DTO.PedidoCreateDTO;
 import com.marymar.app.business.DTO.PedidoResponseDTO;
 import com.marymar.app.business.Service.PedidoService;
 import com.marymar.app.persistence.Entity.DetallePedido;
+import com.marymar.app.persistence.Entity.EstadoPedido;
 import com.marymar.app.persistence.Entity.Pedido;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -35,25 +36,25 @@ public class PedidoController {
         return ResponseEntity.ok(pedidoService.crearPedido(dto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO','COCINERO')")
     @GetMapping("/{id}")
     public ResponseEntity<PedidoResponseDTO> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(pedidoService.obtenerPorId(id));
     }
 
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO','COCINERO')")
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<List<PedidoResponseDTO>> obtenerPorCliente(@PathVariable Long clienteId) {
         return ResponseEntity.ok(pedidoService.obtenerPorCliente(clienteId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','CLIENTE','MESERO','COCINERO')")
     @GetMapping
     public ResponseEntity<List<PedidoResponseDTO>> obtenerTodos() {
         return ResponseEntity.ok(pedidoService.obtenerTodos());
     }
 
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','MESERO')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','MESERO', 'COCINERO')")
     @PutMapping("/{id}/estado")
     public ResponseEntity<PedidoResponseDTO> cambiarEstado(
             @PathVariable Long id,
@@ -125,8 +126,22 @@ public class PedidoController {
     @GetMapping("/{id}/factura")
     public ResponseEntity<byte[]> generarFactura(@PathVariable Long id) throws Exception {
 
+        Pedido pedidoEntidad = pedidoService.obtenerEntidad(id);
+
+        if (pedidoEntidad.getEstado() != EstadoPedido.ENTREGADO &&
+                pedidoEntidad.getEstado() != EstadoPedido.CUENTA_PEDIDA) {
+            throw new IllegalArgumentException("No se puede generar factura aún");
+        }
+
+        if (pedidoEntidad.getEstado() == EstadoPedido.ENTREGADO) {
+            pedidoEntidad.setEstado(EstadoPedido.CUENTA_PEDIDA);
+            pedidoService.guardarEntidad(pedidoEntidad);
+        }
+
+        // 🔥 3. AHORA SÍ TRAER DTO ACTUALIZADO
         PedidoResponseDTO pedido = pedidoService.obtenerPorId(id);
 
+        // ================= PDF =================
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
         PdfDocument pdf = new PdfDocument(writer);
@@ -135,9 +150,10 @@ public class PedidoController {
         document.add(new Paragraph("FACTURA - MAR Y MAR"));
         document.add(new Paragraph("Pedido #" + pedido.getId()));
         document.add(new Paragraph("Fecha: " + pedido.getFecha()));
+
         if (pedido.getClienteNombre() == null){
             document.add(new Paragraph("Cliente: No especificado"));
-        }else{
+        } else {
             document.add(new Paragraph("Cliente: " + pedido.getClienteNombre()));
         }
 
@@ -160,7 +176,6 @@ public class PedidoController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(baos.toByteArray());
     }
-
     @GetMapping("/{id}/comanda")
     public ResponseEntity<byte[]> generarComanda(@PathVariable Long id) throws Exception {
 
@@ -192,12 +207,18 @@ public class PedidoController {
     }
 
     @GetMapping("/filtrar")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('COCINERO')")
     public List<PedidoResponseDTO> filtrar(
             @RequestParam(required = false) String fechaInicio,
             @RequestParam(required = false) String fechaFin,
             @RequestParam(required = false) String estado
     ) {
         return pedidoService.filtrar(fechaInicio, fechaFin, estado);
+    }
+
+    @GetMapping("/cola/{estado}")
+    @PreAuthorize("hasAnyRole('COCINERO','MESERO','ADMINISTRADOR')")
+    public List<PedidoResponseDTO> obtenerCola(@PathVariable String estado) {
+        return pedidoService.obtenerColaCocina(estado);
     }
 }

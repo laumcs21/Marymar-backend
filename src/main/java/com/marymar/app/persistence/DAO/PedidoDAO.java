@@ -107,4 +107,12 @@ public class PedidoDAO {
                 .map(mapper::toDTO)
                 .toList();
     }
+
+    public List<PedidoResponseDTO> obtenerCola(EstadoPedido estadoEnum) {
+
+        return repository.findAllByEstadoOrderByFechaAsc(estadoEnum)
+                .stream()
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }

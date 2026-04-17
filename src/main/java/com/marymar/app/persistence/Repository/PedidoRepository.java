@@ -14,6 +14,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     Optional<Pedido> findByEstado(Long mesaId, EstadoPedido estado);
 
+    List<Pedido> findAllByEstadoOrderByFechaAsc(EstadoPedido estado);
+
     Optional<Pedido> findFirstByMesaIdAndEstadoNotIn(Long mesaId, List<EstadoPedido> estados);
 
     List<Pedido> findByFechaBetween(LocalDateTime inicio, LocalDateTime fin);

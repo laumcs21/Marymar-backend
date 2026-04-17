@@ -10,9 +10,9 @@ public class PersonaCreateDTO {
     private String contrasena;
     private String telefono;
     private LocalDate fechaNacimiento;
-    private String rol; // aquí puede quedarse como String
-    private String direccionEnvio; // opcional
-    private Double salario; // opcional
+    private String rol;
+    private String direccionEnvio;
+    private Double salario;
 
     public PersonaCreateDTO() {}
 

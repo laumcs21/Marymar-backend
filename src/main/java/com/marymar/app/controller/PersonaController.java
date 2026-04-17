@@ -48,7 +48,7 @@ public class PersonaController {
     // CLIENTE: OBTENER SU PERFIL (por token)
     // =========================
     @GetMapping("/me")
-    @PreAuthorize("hasRole('CLIENTE') or hasRole('MESERO') or hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('CLIENTE') or hasRole('MESERO') or hasRole('ADMINISTRADOR') or hasRole('COCINERO')")
     public ResponseEntity<PersonaResponseDTO> miPerfil(Principal principal) {
         return ResponseEntity.ok(personaService.obtenerPorEmail(principal.getName()));
     }
@@ -69,7 +69,7 @@ public class PersonaController {
     // ADMIN: ACTUALIZAR CUALQUIERA
     // =========================
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('MESERO') or hasRole('CLIENTE')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('MESERO') or hasRole('CLIENTE') or hasRole('COCINERO')")
     public ResponseEntity<PersonaResponseDTO> actualizar(
             @PathVariable Long id,
             @RequestBody PersonaCreateDTO dto

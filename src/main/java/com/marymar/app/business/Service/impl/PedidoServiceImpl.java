@@ -116,6 +116,16 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     @Override
+    public Pedido obtenerEntidad(Long id) {
+        return pedidoDAO.obtenerEntidadPorId(id);
+    }
+
+    @Override
+    public void guardarEntidad(Pedido pedido) {
+        pedidoDAO.actualizar(pedido);
+    }
+
+    @Override
     public java.util.List<PedidoResponseDTO> obtenerTodos() {
         return pedidoDAO.obtenerTodos();
     }
@@ -126,7 +136,24 @@ public class PedidoServiceImpl implements PedidoService {
         Pedido pedido = pedidoDAO.obtenerEntidadPorId(id);
         EstadoPedido estado = EstadoPedido.valueOf(nuevoEstado.toUpperCase());
 
-        pedido.setEstado(estado);
+        if (pedido.getEstado() == EstadoPedido.CREADO && estado == EstadoPedido.EN_PREPARACION) {
+            pedido.setEstado(estado);
+        }
+        else if (pedido.getEstado() == EstadoPedido.EN_PREPARACION && estado == EstadoPedido.LISTO) {
+            pedido.setEstado(estado);
+        }
+        else if (pedido.getEstado() == EstadoPedido.LISTO && estado == EstadoPedido.ENTREGADO) {
+            pedido.setEstado(estado);
+        }
+        else if (pedido.getEstado() == EstadoPedido.ENTREGADO && estado == EstadoPedido.CUENTA_PEDIDA) {
+            pedido.setEstado(estado);
+        }
+        else if (pedido.getEstado() == EstadoPedido.CUENTA_PEDIDA && estado == EstadoPedido.PAGADO) {
+            pedido.setEstado(estado);
+        }
+        else {
+            throw new IllegalArgumentException("Cambio de estado no permitido");
+        }
 
         auditoriaService.registrar(
                 "CAMBIAR_ESTADO_PEDIDO",
@@ -321,5 +348,11 @@ public class PedidoServiceImpl implements PedidoService {
                 : null;
 
         return pedidoDAO.filtrar(inicio, fin, estadoEnum);
+    }
+
+    @Override
+    public List<PedidoResponseDTO> obtenerColaCocina(String estado) {
+        EstadoPedido estadoEnum = EstadoPedido.valueOf(estado.toUpperCase());
+        return pedidoDAO.obtenerCola(estadoEnum);
     }
 }

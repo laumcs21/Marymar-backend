@@ -72,6 +72,10 @@ public class PagoServiceImpl implements PagoService {
             throw new IllegalArgumentException("El pedido ya está pagado");
         }
 
+        if (pedido.getEstado() != EstadoPedido.CUENTA_PEDIDA) {
+            throw new IllegalArgumentException("Primero debes generar la factura");
+        }
+
         MetodoPago metodo;
         try {
             metodo = MetodoPago.valueOf(dto.getMetodo().toUpperCase());
