@@ -69,9 +69,14 @@ public class AuthController {
             );
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
-            return ResponseEntity.status(401)
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", "Error interno al iniciar sesión"));
         }
     }
 
@@ -88,9 +93,14 @@ public class AuthController {
             );
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
-            return ResponseEntity.status(401)
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", "Error interno al iniciar sesión con Google"));
         }
     }
 

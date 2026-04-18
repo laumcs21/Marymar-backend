@@ -20,6 +20,7 @@ public class InventarioServiceImpl implements InventarioService {
 
     private final InventarioRepository inventarioRepository;
     private final InsumoRepository insumoRepository;
+    private final LoteInsumoRepository loteInsumoRepository;
     private final InventarioMapper inventarioMapper;
     private final ProductoInsumoRepository productoInsumoRepository;
     private final ProductoRepository productoRepository;
@@ -27,10 +28,11 @@ public class InventarioServiceImpl implements InventarioService {
 
     public InventarioServiceImpl(
             InventarioRepository inventarioRepository,
-            InsumoRepository insumoRepository,
+            InsumoRepository insumoRepository, LoteInsumoRepository loteInsumoRepository,
             InventarioMapper inventarioMapper, ProductoInsumoRepository productoInsumoRepository, ProductoRepository productoRepository, ConsumoInventarioRepository consumoInventarioRepository) {
         this.inventarioRepository = inventarioRepository;
         this.insumoRepository = insumoRepository;
+        this.loteInsumoRepository = loteInsumoRepository;
         this.inventarioMapper = inventarioMapper;
         this.productoInsumoRepository = productoInsumoRepository;
         this.productoRepository = productoRepository;
@@ -73,17 +75,25 @@ public class InventarioServiceImpl implements InventarioService {
             throw new RuntimeException("El stock no puede ser negativo");
         }
 
-        inventario.setStock(dto.getStock());
+        int stockAnterior = inventario.getStock();
+        int nuevoStock = dto.getStock();
 
+        inventario.setStock(nuevoStock);
         inventarioRepository.save(inventario);
 
-        try {
-            actualizarDisponibilidadProductos(inventario.getInsumo().getId());
-        } catch (Exception e) {
-            e.printStackTrace();
+        // 🔥 AQUÍ ESTÁ LO QUE TE FALTABA
+        if (nuevoStock > stockAnterior) {
+            int cantidadEntrada = nuevoStock - stockAnterior;
 
-            throw e;
+            registrarEntradaLote(
+                    inventario.getInsumo().getId(),
+                    cantidadEntrada,
+                    LocalDateTime.now().plusDays(7) // o lo que uses
+            );
         }
+
+        actualizarDisponibilidadProductos(inventario.getInsumo().getId());
+
         return inventarioMapper.toDTO(inventario);
     }
 
@@ -115,9 +125,11 @@ public class InventarioServiceImpl implements InventarioService {
 
             int cantidadADescontar = pi.getCantidad() * cantidadPedido;
 
-            if (inventario.getStock() < cantidadADescontar) {
+            int stockCocina = obtenerStockCocina(insumoId);
+
+            if (stockCocina < cantidadADescontar) {
                 throw new IllegalArgumentException(
-                        "Stock insuficiente de " + pi.getInsumo().getNombre()
+                        "Stock insuficiente en cocina de " + pi.getInsumo().getNombre()
                 );
             }
 
@@ -150,12 +162,11 @@ public class InventarioServiceImpl implements InventarioService {
                 Long insumoId = pi.getInsumo().getId();
                 int consumo = pi.getCantidad() * d.getCantidad();
 
-                Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
-                        .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+                int stockCocina = obtenerStockCocina(insumoId);
 
-                if (inventario.getStock() < consumo) {
+                if (stockCocina < consumo) {
                     throw new IllegalArgumentException(
-                            "Stock insuficiente de " + pi.getInsumo().getNombre()
+                            "Stock insuficiente en cocina de " + pi.getInsumo().getNombre()
                     );
                 }
             }
@@ -177,6 +188,16 @@ public class InventarioServiceImpl implements InventarioService {
 
                 Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
                         .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+
+                int stockCocina = obtenerStockCocina(insumoId);
+
+                if (stockCocina < consumo) {
+                    throw new IllegalArgumentException(
+                            "No hay suficiente stock en cocina de " + pi.getInsumo().getNombre()
+                    );
+                }
+
+                descontarDeLotes(insumoId, consumo);
 
                 inventario.setStock(inventario.getStock() - consumo);
                 inventarioRepository.save(inventario);
@@ -209,12 +230,11 @@ public class InventarioServiceImpl implements InventarioService {
             Long insumoId = pi.getInsumo().getId();
             int consumo = pi.getCantidad() * cantidad;
 
-            Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
-                    .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+            int stockCocina = obtenerStockCocina(insumoId);
 
-            if (inventario.getStock() < consumo) {
+            if (stockCocina < consumo) {
                 throw new IllegalArgumentException(
-                        "No hay suficiente stock de " + pi.getInsumo().getNombre()
+                        "Stock insuficiente en cocina de " + pi.getInsumo().getNombre()
                 );
             }
         }
@@ -252,5 +272,148 @@ public class InventarioServiceImpl implements InventarioService {
             producto.setActivo(disponible);
             productoRepository.save(producto);
         }
+    }
+
+    @Override
+    public void registrarEntradaLote(Long insumoId, int cantidad, LocalDateTime fechaVencimiento) {
+
+        LoteInsumo lote = new LoteInsumo();
+
+        lote.setInsumo(insumoRepository.findById(insumoId)
+                .orElseThrow(() -> new RuntimeException("Insumo no encontrado")));
+
+        lote.setCantidadInicial(cantidad);
+        lote.setCantidadDisponible(cantidad);
+
+        lote.setFechaIngreso(LocalDateTime.now());
+        lote.setFechaVencimiento(fechaVencimiento);
+
+        lote.setUbicacion(UbicacionInventario.BODEGA);
+        lote.setEstado(EstadoLote.ACTIVO);
+
+        loteInsumoRepository.save(lote);
+    }
+
+    @Override
+    public void descontarDeLotes(Long insumoId, int cantidadNecesaria) {
+
+        List<LoteInsumo> lotes = loteInsumoRepository
+                .findByInsumoIdAndUbicacionAndEstadoOrderByFechaVencimientoAscFechaIngresoAsc(
+                        insumoId,
+                        UbicacionInventario.COCINA,
+                        EstadoLote.ACTIVO
+                );
+
+        int restante = cantidadNecesaria;
+
+        for (LoteInsumo lote : lotes) {
+
+            if (restante <= 0) break;
+
+            int disponible = lote.getCantidadDisponible();
+
+            if (disponible <= 0) continue;
+
+            if (disponible >= restante) {
+                lote.setCantidadDisponible(disponible - restante);
+                restante = 0;
+            } else {
+                lote.setCantidadDisponible(0);
+                restante -= disponible;
+            }
+
+            // actualizar estado
+            if (lote.getCantidadDisponible() == 0) {
+                lote.setEstado(EstadoLote.AGOTADO);
+            }
+
+            loteInsumoRepository.save(lote);
+        }
+
+        if (restante > 0) {
+            throw new IllegalArgumentException("Stock insuficiente (lotes)");
+        }
+    }
+
+    @Transactional
+    @Override
+    public void ingresarStock(Long insumoId, int cantidad, LocalDateTime fechaVencimiento) {
+
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("Cantidad inválida");
+        }
+
+        Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
+                .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+
+        registrarEntradaLote(insumoId, cantidad, fechaVencimiento);
+
+        inventario.setStock(inventario.getStock() + cantidad);
+        inventarioRepository.save(inventario);
+    }
+
+    @Transactional
+    @Override
+    public void surtirCocina(Long insumoId, int cantidad) {
+
+        List<LoteInsumo> lotesBodega = loteInsumoRepository
+                .findByInsumoIdAndUbicacionAndEstadoOrderByFechaVencimientoAscFechaIngresoAsc(
+                        insumoId,
+                        UbicacionInventario.BODEGA,
+                        EstadoLote.ACTIVO
+                );
+
+        int restante = cantidad;
+
+        for (LoteInsumo lote : lotesBodega) {
+
+            if (restante <= 0) break;
+
+            int disponible = lote.getCantidadDisponible();
+
+            if (disponible <= 0) continue;
+
+            int aMover = Math.min(disponible, restante);
+
+            // 🔻 quitar de bodega
+            lote.setCantidadDisponible(disponible - aMover);
+
+            if (lote.getCantidadDisponible() == 0) {
+                lote.setEstado(EstadoLote.AGOTADO);
+            }
+
+            loteInsumoRepository.save(lote);
+
+            LoteInsumo loteCocina = new LoteInsumo();
+            loteCocina.setInsumo(lote.getInsumo());
+            loteCocina.setCantidadInicial(aMover);
+            loteCocina.setCantidadDisponible(aMover);
+            loteCocina.setFechaIngreso(lote.getFechaIngreso());
+            loteCocina.setFechaVencimiento(lote.getFechaVencimiento());
+            loteCocina.setUbicacion(UbicacionInventario.COCINA);
+            loteCocina.setEstado(EstadoLote.ACTIVO);
+
+            loteInsumoRepository.save(loteCocina);
+
+            restante -= aMover;
+        }
+
+        if (restante > 0) {
+            throw new IllegalArgumentException("No hay suficiente en bodega para surtir cocina");
+        }
+    }
+
+    @Override
+    public int obtenerStockCocina(Long insumoId) {
+        List<LoteInsumo> lotesCocina = loteInsumoRepository
+                .findByInsumoIdAndUbicacionAndEstadoOrderByFechaVencimientoAscFechaIngresoAsc(
+                        insumoId,
+                        UbicacionInventario.COCINA,
+                        EstadoLote.ACTIVO
+                );
+
+        return lotesCocina.stream()
+                .mapToInt(LoteInsumo::getCantidadDisponible)
+                .sum();
     }
 }

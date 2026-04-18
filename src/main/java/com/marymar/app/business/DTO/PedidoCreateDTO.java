@@ -12,15 +12,20 @@ public class PedidoCreateDTO {
 
     public PedidoCreateDTO() {}
 
-    public Long getClienteId() { return clienteId; }
-    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
+    public Long getClienteId() {
+        return clienteId;
+    }
 
-    public Long getMeseroId() { return meseroId; }
-    public void setMeseroId(Long meseroId) { this.meseroId = meseroId; }
+    public void setClienteId(Long clienteId) {
+        this.clienteId = clienteId;
+    }
 
-    public List<DetallePedidoCreateDTO> getDetalles() { return detalles; }
-    public void setDetalles(List<DetallePedidoCreateDTO> detalles) {
-        this.detalles = detalles;
+    public Long getMeseroId() {
+        return meseroId;
+    }
+
+    public void setMeseroId(Long meseroId) {
+        this.meseroId = meseroId;
     }
 
     public Long getMesaId() {
@@ -36,7 +41,14 @@ public class PedidoCreateDTO {
     }
 
     public void setTipo(String tipo) {
-        tipo = tipo;
+        this.tipo = tipo;
+    }
+
+    public List<DetallePedidoCreateDTO> getDetalles() {
+        return detalles;
+    }
+
+    public void setDetalles(List<DetallePedidoCreateDTO> detalles) {
+        this.detalles = detalles;
     }
 }
-

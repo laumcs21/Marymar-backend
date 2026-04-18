@@ -25,15 +25,26 @@ public class GoogleIdTokenServiceImpl implements GoogleIdTokenService {
     public GoogleIdTokenServiceImpl(
             @Value("${google.server-client-id}") String googleServerClientId
     ) {
-        this.googleServerClientId = googleServerClientId;
+        this.googleServerClientId = googleServerClientId != null
+                ? googleServerClientId.trim()
+                : "";
+
         this.jwtDecoder = NimbusJwtDecoder
-                .withIssuerLocation("https://accounts.google.com")
+                .withJwkSetUri("https://www.googleapis.com/oauth2/v3/certs")
                 .build();
     }
 
     @Override
     public GoogleUserInfoDTO validarToken(String idToken) {
         try {
+            if (idToken == null || idToken.isBlank()) {
+                throw new IllegalArgumentException("idToken de Google requerido");
+            }
+
+            if (googleServerClientId.isBlank()) {
+                throw new IllegalStateException("google.server-client-id no está configurado");
+            }
+
             Jwt jwt = jwtDecoder.decode(idToken);
 
             String issuer = jwt.getIssuer() != null ? jwt.getIssuer().toString() : null;
@@ -47,15 +58,23 @@ public class GoogleIdTokenServiceImpl implements GoogleIdTokenService {
             }
 
             String email = jwt.getClaimAsString("email");
-            Boolean emailVerified = jwt.getClaim("email_verified");
             String nombre = jwt.getClaimAsString("name");
             String sub = jwt.getSubject();
+
+            Object emailVerifiedClaim = jwt.getClaims().get("email_verified");
+            boolean emailVerified = false;
+
+            if (emailVerifiedClaim instanceof Boolean) {
+                emailVerified = (Boolean) emailVerifiedClaim;
+            } else if (emailVerifiedClaim instanceof String) {
+                emailVerified = Boolean.parseBoolean((String) emailVerifiedClaim);
+            }
 
             if (email == null || email.isBlank()) {
                 throw new IllegalArgumentException("El token de Google no contiene email");
             }
 
-            if (!Boolean.TRUE.equals(emailVerified)) {
+            if (!emailVerified) {
                 throw new IllegalArgumentException("El email de Google no está verificado");
             }
 
@@ -63,8 +82,14 @@ public class GoogleIdTokenServiceImpl implements GoogleIdTokenService {
                 throw new IllegalArgumentException("El token de Google no contiene subject");
             }
 
+            if (nombre == null || nombre.isBlank()) {
+                nombre = email;
+            }
+
             return new GoogleUserInfoDTO(sub, email, nombre);
 
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw e;
         } catch (JwtException e) {
             throw new IllegalArgumentException("Token de Google inválido");
         }

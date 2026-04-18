@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -48,5 +49,38 @@ public class InventarioController {
         inventarioService.eliminar(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    // =========================
+    // INGRESAR STOCK (BODEGA)
+    // =========================
+    @PostMapping("/{insumoId}/ingresar")
+    public ResponseEntity<Void> ingresarStock(
+            @PathVariable Long insumoId,
+            @RequestParam int cantidad,
+            @RequestParam String fechaVencimiento
+    ) {
+
+        inventarioService.ingresarStock(
+                insumoId,
+                cantidad,
+                LocalDateTime.parse(fechaVencimiento)
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    // =========================
+    // SURTIR COCINA
+    // =========================
+    @PostMapping("/{insumoId}/surtir")
+    public ResponseEntity<Void> surtirCocina(
+            @PathVariable Long insumoId,
+            @RequestParam int cantidad
+    ) {
+
+        inventarioService.surtirCocina(insumoId, cantidad);
+
+        return ResponseEntity.ok().build();
     }
 }
