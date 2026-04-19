@@ -1,9 +1,16 @@
 package com.marymar.app.business.DTO;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDate;
 
 public class PersonaCreateDTO {
 
+    @NotBlank(message = "La identificación es obligatoria")
+    @Pattern(regexp = "\\d+", message = "La identificación solo debe contener números")
+    @Size(max = 15, message = "Máximo 15 dígitos")
     private String numeroIdentificacion;
     private String nombre;
     private String email;

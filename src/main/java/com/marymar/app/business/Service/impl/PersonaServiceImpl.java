@@ -134,6 +134,14 @@ public class PersonaServiceImpl implements PersonaService {
     // =========================
     private void validarPersona(PersonaCreateDTO dto, boolean esNuevo, Long idActual) {
 
+        if (dto.getNumeroIdentificacion().length() > 15) {
+            throw new RuntimeException("La identificación no puede superar 15 dígitos");
+        }
+
+        if (!dto.getNumeroIdentificacion().matches("\\d+")) {
+            throw new RuntimeException("La identificación solo debe contener números");
+        }
+
         if (dto.getNumeroIdentificacion() == null ||
                 dto.getNumeroIdentificacion().isBlank()) {
             throw new IllegalArgumentException("La identificación es obligatoria");

@@ -11,6 +11,7 @@ import com.marymar.app.persistence.Repository.PersonaRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.marymar.app.business.Exception.CredencialesInvalidasException;
 
 import java.util.Map;
 
@@ -68,6 +69,10 @@ public class AuthController {
                     extractClientIp(httpRequest)
             );
             return ResponseEntity.ok(response);
+
+        } catch (CredencialesInvalidasException e) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", e.getMessage()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

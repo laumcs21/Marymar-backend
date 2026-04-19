@@ -1,8 +1,6 @@
 package com.marymar.app.business.Service.impl;
 
-import com.marymar.app.business.DTO.InventarioCreateDTO;
-import com.marymar.app.business.DTO.InventarioResponseDTO;
-import com.marymar.app.business.DTO.InventarioUpdateDTO;
+import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.Service.InventarioService;
 import com.marymar.app.persistence.Entity.*;
 import com.marymar.app.persistence.Mapper.InventarioMapper;
@@ -46,14 +44,14 @@ public class InventarioServiceImpl implements InventarioService {
         Insumo insumo = insumoRepository.findById(dto.getInsumoId())
                 .orElseThrow(() -> new RuntimeException("Insumo no encontrado"));
 
-        if(dto.getStock() < 0){
+        if (dto.getStock() < 0) {
             throw new RuntimeException("El stock no puede ser negativo");
         }
 
         Optional<Inventario> inventarioExistente =
                 inventarioRepository.findByInsumoId(dto.getInsumoId());
 
-        if(inventarioExistente.isPresent()){
+        if (inventarioExistente.isPresent()) {
             throw new RuntimeException("El inventario para este insumo ya existe");
         }
 
@@ -71,7 +69,7 @@ public class InventarioServiceImpl implements InventarioService {
         Inventario inventario = inventarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
 
-        if(dto.getStock() < 0){
+        if (dto.getStock() < 0) {
             throw new RuntimeException("El stock no puede ser negativo");
         }
 
@@ -344,7 +342,15 @@ public class InventarioServiceImpl implements InventarioService {
         }
 
         Inventario inventario = inventarioRepository.findByInsumoId(insumoId)
-                .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+                .orElseGet(() -> {
+                    Inventario nuevo = new Inventario();
+                    nuevo.setInsumo(
+                            insumoRepository.findById(insumoId)
+                                    .orElseThrow(() -> new RuntimeException("Insumo no encontrado"))
+                    );
+                    nuevo.setStock(0);
+                    return inventarioRepository.save(nuevo);
+                });
 
         registrarEntradaLote(insumoId, cantidad, fechaVencimiento);
 
@@ -356,6 +362,9 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     public void surtirCocina(Long insumoId, int cantidad) {
 
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("Cantidad inválida");
+        }
         List<LoteInsumo> lotesBodega = loteInsumoRepository
                 .findByInsumoIdAndUbicacionAndEstadoOrderByFechaVencimientoAscFechaIngresoAsc(
                         insumoId,
@@ -375,26 +384,39 @@ public class InventarioServiceImpl implements InventarioService {
 
             int aMover = Math.min(disponible, restante);
 
-            // 🔻 quitar de bodega
             lote.setCantidadDisponible(disponible - aMover);
 
             if (lote.getCantidadDisponible() == 0) {
                 lote.setEstado(EstadoLote.AGOTADO);
             }
 
-            loteInsumoRepository.save(lote);
+            Optional<LoteInsumo> loteExistente = loteInsumoRepository
+                    .findByInsumoIdAndUbicacionAndFechaVencimientoAndEstado(
+                            insumoId, UbicacionInventario.COCINA, lote.getFechaVencimiento(), EstadoLote.ACTIVO
+                    );
 
-            LoteInsumo loteCocina = new LoteInsumo();
-            loteCocina.setInsumo(lote.getInsumo());
-            loteCocina.setCantidadInicial(aMover);
-            loteCocina.setCantidadDisponible(aMover);
-            loteCocina.setFechaIngreso(lote.getFechaIngreso());
-            loteCocina.setFechaVencimiento(lote.getFechaVencimiento());
-            loteCocina.setUbicacion(UbicacionInventario.COCINA);
-            loteCocina.setEstado(EstadoLote.ACTIVO);
+            if (loteExistente.isPresent()) {
+                LoteInsumo existente = loteExistente.get();
 
-            loteInsumoRepository.save(loteCocina);
+                existente.setCantidadDisponible(
+                        existente.getCantidadDisponible() + aMover
+                );
 
+                existente.setCantidadInicial(existente.getCantidadInicial()+aMover);
+                loteInsumoRepository.save(existente);
+            } else {
+                LoteInsumo loteCocina = new LoteInsumo();
+
+                loteCocina.setInsumo(lote.getInsumo());
+                loteCocina.setCantidadInicial(aMover);
+                loteCocina.setCantidadDisponible(aMover);
+                loteCocina.setFechaIngreso(LocalDateTime.now()); // 👈 importante
+                loteCocina.setFechaVencimiento(lote.getFechaVencimiento());
+                loteCocina.setUbicacion(UbicacionInventario.COCINA);
+                loteCocina.setEstado(EstadoLote.ACTIVO);
+
+                loteInsumoRepository.save(loteCocina);
+            }
             restante -= aMover;
         }
 
@@ -415,5 +437,60 @@ public class InventarioServiceImpl implements InventarioService {
         return lotesCocina.stream()
                 .mapToInt(LoteInsumo::getCantidadDisponible)
                 .sum();
+    }
+
+    @Override
+    public int obtenerStockBodega(Long insumoId) {
+
+        List<LoteInsumo> lotes = loteInsumoRepository
+                .findByInsumoIdAndUbicacionAndEstadoOrderByFechaVencimientoAscFechaIngresoAsc(
+                        insumoId,
+                        UbicacionInventario.BODEGA,
+                        EstadoLote.ACTIVO
+                );
+
+        return lotes.stream()
+                .mapToInt(LoteInsumo::getCantidadDisponible)
+                .sum();
+    }
+
+    @Override
+    public List<InventarioBodegueroDTO> obtenerVistaBodeguero() {
+
+        return inventarioRepository.findAll().stream()
+                .map(inv -> {
+
+                    Long insumoId = inv.getInsumo().getId();
+
+                    return new InventarioBodegueroDTO(
+                            inv.getId(),
+                            insumoId,
+                            inv.getInsumo().getNombre(),
+                            inv.getStock(),
+                            obtenerStockCocina(insumoId),
+                            obtenerStockBodega(insumoId)
+                    );
+
+                }).toList();
+    }
+
+    @Override
+    public List<LoteDTO> obtenerLotes(Long insumoId) {
+
+        return loteInsumoRepository
+                .findByInsumoIdAndEstadoOrderByUbicacionAscFechaVencimientoAscFechaIngresoAsc(
+                        insumoId,
+                        EstadoLote.ACTIVO
+                )
+                .stream()
+                .map(l -> new LoteDTO(
+                        l.getId(),
+                        l.getCantidadInicial(),
+                        l.getCantidadDisponible(),
+                        l.getUbicacion().name(),
+                        l.getFechaIngreso(),
+                        l.getFechaVencimiento()
+                ))
+                .toList();
     }
 }

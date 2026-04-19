@@ -19,25 +19,25 @@ public class InsumoController {
         this.insumoService = insumoService;
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @PostMapping
     public ResponseEntity<InsumoResponseDTO> crear(@RequestBody InsumoCreateDTO dto){
         return ResponseEntity.ok(insumoService.crear(dto));
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @GetMapping("/{id}")
     public ResponseEntity<InsumoResponseDTO> obtener(@PathVariable Long id){
         return ResponseEntity.ok(insumoService.obtenerPorId(id));
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @GetMapping
     public ResponseEntity<List<InsumoResponseDTO>> obtenerTodos(){
         return ResponseEntity.ok(insumoService.obtenerTodos());
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id){
 
@@ -47,7 +47,7 @@ public class InsumoController {
 
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @PutMapping("/{id}")
     public ResponseEntity<InsumoResponseDTO> actualizar(
             @PathVariable Long id,

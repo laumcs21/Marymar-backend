@@ -1,8 +1,6 @@
 package com.marymar.app.controller;
 
-import com.marymar.app.business.DTO.InventarioCreateDTO;
-import com.marymar.app.business.DTO.InventarioResponseDTO;
-import com.marymar.app.business.DTO.InventarioUpdateDTO;
+import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.Service.InventarioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,13 +19,13 @@ public class InventarioController {
         this.inventarioService = inventarioService;
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @PostMapping
     public ResponseEntity<InventarioResponseDTO> crear(@RequestBody InventarioCreateDTO dto){
         return ResponseEntity.ok(inventarioService.crear(dto));
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @PutMapping("/{id}")
     public ResponseEntity<InventarioResponseDTO> actualizar(
             @PathVariable Long id,
@@ -36,13 +34,13 @@ public class InventarioController {
         return ResponseEntity.ok(inventarioService.actualizar(id, dto));
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @GetMapping
     public ResponseEntity<List<InventarioResponseDTO>> obtenerTodos(){
         return ResponseEntity.ok(inventarioService.obtenerTodos());
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id){
 
@@ -54,6 +52,7 @@ public class InventarioController {
     // =========================
     // INGRESAR STOCK (BODEGA)
     // =========================
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @PostMapping("/{insumoId}/ingresar")
     public ResponseEntity<Void> ingresarStock(
             @PathVariable Long insumoId,
@@ -73,6 +72,7 @@ public class InventarioController {
     // =========================
     // SURTIR COCINA
     // =========================
+    @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('BODEGUERO')")
     @PostMapping("/{insumoId}/surtir")
     public ResponseEntity<Void> surtirCocina(
             @PathVariable Long insumoId,
@@ -82,5 +82,17 @@ public class InventarioController {
         inventarioService.surtirCocina(insumoId, cantidad);
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/bodeguero")
+    @PreAuthorize("hasRole('BODEGUERO') or hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<InventarioBodegueroDTO>> vistaBodeguero() {
+        return ResponseEntity.ok(inventarioService.obtenerVistaBodeguero());
+    }
+
+    @GetMapping("/{insumoId}/lotes")
+    @PreAuthorize("hasRole('BODEGUERO') or hasRole('ADMINISTRADOR')")
+    public ResponseEntity<List<LoteDTO>> obtenerLotes(@PathVariable Long insumoId) {
+        return ResponseEntity.ok(inventarioService.obtenerLotes(insumoId));
     }
 }

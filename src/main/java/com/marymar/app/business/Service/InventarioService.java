@@ -1,8 +1,6 @@
 package com.marymar.app.business.Service;
 
-import com.marymar.app.business.DTO.InventarioCreateDTO;
-import com.marymar.app.business.DTO.InventarioResponseDTO;
-import com.marymar.app.business.DTO.InventarioUpdateDTO;
+import com.marymar.app.business.DTO.*;
 import com.marymar.app.persistence.Entity.Pedido;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,4 +38,10 @@ public interface InventarioService {
     void surtirCocina(Long insumoId, int cantidad);
 
     int obtenerStockCocina(Long insumoId);
+
+    int obtenerStockBodega(Long insumoId);
+
+    List<InventarioBodegueroDTO> obtenerVistaBodeguero();
+
+    List<LoteDTO> obtenerLotes(Long insumoId);
 }
