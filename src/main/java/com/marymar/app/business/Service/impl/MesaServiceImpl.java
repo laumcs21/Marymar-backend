@@ -117,6 +117,12 @@ public class MesaServiceImpl implements MesaService {
         return mesaDAO.actualizar(mesa);
     }
 
+    @Override
+    public MesaResponseDTO obtenerPorId(Long id) {
+
+        return mesaDAO.obtenerPorId(id);
+    }
+
     // =========================
     // CANCELAR MESA (CLIENTE SE VA)
     // =========================

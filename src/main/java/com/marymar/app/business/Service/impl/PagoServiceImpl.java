@@ -10,10 +10,7 @@ import com.marymar.app.persistence.DAO.MesaDAO;
 import com.marymar.app.persistence.DAO.PedidoDAO;
 import com.marymar.app.persistence.Entity.*;
 import com.marymar.app.persistence.Mapper.PagoMapper;
-import com.marymar.app.persistence.Repository.ConsumoInventarioRepository;
-import com.marymar.app.persistence.Repository.InventarioRepository;
 import com.marymar.app.persistence.Repository.PagoRepository;
-import com.marymar.app.persistence.Repository.ProductoInsumoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -165,5 +162,25 @@ public class PagoServiceImpl implements PagoService {
                 .orElseThrow(() -> new RuntimeException("No existe pago para este pedido"));
 
         return pagoMapper.toDTO(pago);
+    }
+
+    @Override
+    public List<String> obtenerSoportes(Long pedidoId, LocalDateTime inicio, LocalDateTime fin) {
+
+        List<Pago> pagos;
+
+        if (inicio != null && fin != null) {
+            pagos = pagoRepository
+                    .findByPedidoIdAndComprobanteUrlIsNotNullAndFechaPagoBetween(
+                            pedidoId, inicio, fin
+                    );
+        } else {
+            pagos = pagoRepository
+                    .findByPedidoIdAndComprobanteUrlIsNotNull(pedidoId);
+        }
+
+        return pagos.stream()
+                .map(Pago::getComprobanteUrl)
+                .toList();
     }
 }

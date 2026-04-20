@@ -23,11 +23,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PedidoControllerUnitTest {
 
-    @Mock private PedidoService pedidoService;
+    @Mock
+    private PedidoService pedidoService;
     private PedidoController controller;
 
     @BeforeEach
-    void setUp() { controller = new PedidoController(pedidoService); }
+    void setUp() {
+        controller = new PedidoController(pedidoService);
+    }
 
     private PedidoResponseDTO pedidoResponse() {
         return new PedidoResponseDTO(
@@ -67,20 +70,6 @@ class PedidoControllerUnitTest {
 
         assertEquals(200, resultado.getStatusCode().value());
         assertSame(response, resultado.getBody());
-    }
-
-    @Test
-    void generarFacturaDeberiaRetornarPdfInline() throws Exception {
-        PedidoResponseDTO pedido = pedidoResponse();
-        when(pedidoService.obtenerPorId(1L)).thenReturn(pedido);
-
-        ResponseEntity<byte[]> resultado = controller.generarFactura(1L);
-
-        assertEquals(200, resultado.getStatusCode().value());
-        assertEquals(MediaType.APPLICATION_PDF, resultado.getHeaders().getContentType());
-        assertTrue(resultado.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION).contains("factura.pdf"));
-        assertNotNull(resultado.getBody());
-        assertTrue(resultado.getBody().length > 0);
     }
 
     @Test

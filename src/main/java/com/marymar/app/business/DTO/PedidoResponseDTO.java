@@ -23,6 +23,7 @@ public class PedidoResponseDTO {
     private BigDecimal total;
     private List<DetallePedidoResponseDTO> detalles;
     private PagoResponseDTO pago;
+    private boolean puedeVerSoporte;
 
 
     public PedidoResponseDTO() {}
@@ -77,4 +78,15 @@ public class PedidoResponseDTO {
     public List<DetallePedidoResponseDTO> getDetalles() { return detalles; }
 
     public PagoResponseDTO getPago() {return pago;}
+
+    public boolean isPuedeVerSoporte() {
+        return puedeVerSoporte;
+    }
+    public void setPuedeVerSoporte(boolean puedeVerSoporte) {
+        this.puedeVerSoporte = puedeVerSoporte;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
 }

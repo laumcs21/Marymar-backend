@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 class InsumoControllerUnitTest {
 
     @Mock private InsumoService insumoService;
+
     private InsumoController controller;
 
     @BeforeEach
@@ -37,6 +38,19 @@ class InsumoControllerUnitTest {
 
         assertEquals(200, resultado.getStatusCode().value());
         assertSame(response, resultado.getBody());
+        verify(insumoService).crear(dto);
+    }
+
+    @Test
+    void obtenerDeberiaRetornarInsumoSolicitado() {
+        InsumoResponseDTO response = new InsumoResponseDTO(1L, "Harina", "kg");
+        when(insumoService.obtenerPorId(1L)).thenReturn(response);
+
+        ResponseEntity<InsumoResponseDTO> resultado = controller.obtener(1L);
+
+        assertEquals(200, resultado.getStatusCode().value());
+        assertSame(response, resultado.getBody());
+        verify(insumoService).obtenerPorId(1L);
     }
 
     @Test
@@ -45,13 +59,31 @@ class InsumoControllerUnitTest {
 
         ResponseEntity<List<InsumoResponseDTO>> resultado = controller.obtenerTodos();
 
+        assertEquals(200, resultado.getStatusCode().value());
+        assertNotNull(resultado.getBody());
         assertEquals(1, resultado.getBody().size());
+        verify(insumoService).obtenerTodos();
+    }
+
+    @Test
+    void actualizarDeberiaRetornarEntidadActualizada() {
+        InsumoCreateDTO dto = new InsumoCreateDTO("Harina premium", "g");
+        InsumoResponseDTO response = new InsumoResponseDTO(1L, "Harina premium", "g");
+        when(insumoService.actualizar(1L, dto)).thenReturn(response);
+
+        ResponseEntity<InsumoResponseDTO> resultado = controller.actualizar(1L, dto);
+
+        assertEquals(200, resultado.getStatusCode().value());
+        assertSame(response, resultado.getBody());
+        verify(insumoService).actualizar(1L, dto);
     }
 
     @Test
     void eliminarDeberiaRetornar204() {
         ResponseEntity<Void> resultado = controller.eliminar(5L);
+
         assertEquals(204, resultado.getStatusCode().value());
+        assertNull(resultado.getBody());
         verify(insumoService).eliminar(5L);
     }
 }

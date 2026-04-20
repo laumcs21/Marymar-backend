@@ -34,20 +34,38 @@ public class PedidoMapper {
         }
 
         var pagoDTO = pagoMapper.toDTO(pedido.getPago());
-        return new PedidoResponseDTO(
+
+        // =========================
+        // 🔥 NUEVA LÓGICA SOPORTE
+        // =========================
+        boolean puedeVerSoporte = false;
+
+        if (pedido.getPago() != null) {
+
+            String metodo = pedido.getPago().getMetodo().name();
+            String comprobante = pedido.getPago().getComprobanteUrl();
+
+            puedeVerSoporte =
+                    metodo != null &&
+                            metodo.equalsIgnoreCase("TRANSFERENCIA") &&
+                            comprobante != null &&
+                            !comprobante.isBlank();
+        }
+
+        // =========================
+        // DTO FINAL
+        // =========================
+        PedidoResponseDTO dto = new PedidoResponseDTO(
                 pedido.getId(),
                 pedido.getFecha(),
                 pedido.getEstado() != null ? pedido.getEstado().name() : null,
-                pedido.getTipo() != null ? pedido.getTipo().name() : null, // 🔥 NUEVO
+                pedido.getTipo() != null ? pedido.getTipo().name() : null,
 
-                // cliente (solo si existe)
                 pedido.getCliente() != null ? pedido.getCliente().getNombre() : null,
 
-                // mesero
                 pedido.getMesero() != null ? pedido.getMesero().getId() : null,
                 pedido.getMesero() != null ? pedido.getMesero().getNombre() : null,
 
-                // mesa (solo si existe)
                 pedido.getMesa() != null ? pedido.getMesa().getId() : null,
                 pedido.getMesa() != null ? pedido.getMesa().getNumero() : null,
 
@@ -55,6 +73,11 @@ public class PedidoMapper {
                 detallesDTO,
                 pagoDTO
         );
+
+        // 🔥 SET FINAL
+        dto.setPuedeVerSoporte(puedeVerSoporte);
+
+        return dto;
     }
 
     private DetallePedidoResponseDTO detalleToDTO(DetallePedido detalle) {

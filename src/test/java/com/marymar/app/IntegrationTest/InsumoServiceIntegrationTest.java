@@ -28,6 +28,7 @@ class InsumoServiceIntegrationTest {
     @Autowired private InsumoRepository insumoRepository;
     @Autowired private InventarioRepository inventarioRepository;
     @Autowired private EntityManager entityManager;
+
     @MockitoBean
     private GoogleIdTokenService googleIdTokenService;
 
@@ -37,7 +38,10 @@ class InsumoServiceIntegrationTest {
         assertNotNull(creado.getId());
         assertEquals("Harina", creado.getNombre());
 
-        InsumoResponseDTO actualizado = insumoService.actualizar(creado.getId(), new InsumoCreateDTO("Harina premium", "g"));
+        InsumoResponseDTO actualizado = insumoService.actualizar(
+                creado.getId(),
+                new InsumoCreateDTO("Harina premium", "g")
+        );
         entityManager.flush();
         entityManager.clear();
 
@@ -57,6 +61,27 @@ class InsumoServiceIntegrationTest {
     }
 
     @Test
+    void noDeberiaPermitirActualizarConNombreDuplicadoDeOtroRegistro() {
+        InsumoResponseDTO harina = insumoService.crear(new InsumoCreateDTO("Harina", "kg"));
+        InsumoResponseDTO arroz = insumoService.crear(new InsumoCreateDTO("Arroz", "kg"));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> insumoService.actualizar(arroz.getId(), new InsumoCreateDTO("Harina", "gr")));
+
+        assertEquals("Ya existe un insumo con ese nombre", ex.getMessage());
+        assertEquals("Arroz", insumoRepository.findById(arroz.getId()).orElseThrow().getNombre());
+        assertNotNull(harina.getId());
+    }
+
+    @Test
+    void noDeberiaPermitirActualizarInsumoInexistente() {
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> insumoService.actualizar(999L, new InsumoCreateDTO("Sal", "kg")));
+
+        assertEquals("Insumo no encontrado", ex.getMessage());
+    }
+
+    @Test
     void eliminarDeberiaBorrarTambienInventarioAsociado() {
         InsumoResponseDTO insumo = insumoService.crear(new InsumoCreateDTO("Aceite", "lt"));
         inventarioService.crear(new InventarioCreateDTO(insumo.getId(), 8));
@@ -68,5 +93,24 @@ class InsumoServiceIntegrationTest {
 
         assertTrue(insumoRepository.findById(insumo.getId()).isEmpty());
         assertTrue(inventarioRepository.findByInsumoId(insumo.getId()).isEmpty());
+    }
+
+    @Test
+    void eliminarDeberiaBorrarInsumoSinInventario() {
+        InsumoResponseDTO insumo = insumoService.crear(new InsumoCreateDTO("Cúrcuma", "gr"));
+
+        insumoService.eliminar(insumo.getId());
+        entityManager.flush();
+        entityManager.clear();
+
+        assertTrue(insumoRepository.findById(insumo.getId()).isEmpty());
+    }
+
+    @Test
+    void eliminarDeberiaFallarSiInsumoNoExiste() {
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> insumoService.eliminar(12345L));
+
+        assertEquals("Insumo no encontrado", ex.getMessage());
     }
 }

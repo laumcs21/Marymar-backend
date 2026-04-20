@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/pagos")
@@ -51,6 +53,19 @@ public class PagoController {
 
         return ResponseEntity.ok(
                 pagoService.obtenerPorPedido(pedidoId)
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @GetMapping("/soportes")
+    public ResponseEntity<List<String>> obtenerSoportes(
+            @RequestParam Long pedidoId,
+            @RequestParam(required = false) LocalDateTime inicio,
+            @RequestParam(required = false) LocalDateTime fin
+    ) {
+
+        return ResponseEntity.ok(
+                pagoService.obtenerSoportes(pedidoId, inicio, fin)
         );
     }
 }

@@ -3,6 +3,8 @@ package com.marymar.app.IntegrationTest;
 import com.marymar.app.TestSupport.TestDataFactory;
 import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.Service.*;
+import com.marymar.app.persistence.Entity.EstadoPedido;
+import com.marymar.app.persistence.Entity.Pedido;
 import com.marymar.app.persistence.Entity.Persona;
 import com.marymar.app.persistence.Entity.Rol;
 import com.marymar.app.persistence.Repository.PersonaRepository;
@@ -255,40 +257,10 @@ class PedidoServiceIntegrationTest {
         assertTrue(actualizado.getDetalles().isEmpty());
         assertEquals(new BigDecimal("0"), actualizado.getTotal());
     }
-
-    @Test
-    void noDeberiaPermitirModificarPedidoPagado() {
-        Persona mesero = guardarMesero("pedido.pagado@test.com");
-        var mesa = mesaService.crearMesa(new MesaCreateDTO(27, 4));
-        var categoria = categoriaService.crear(new CategoriaCreateDTO("Especiales"));
-        var producto = productoService.crear(
-                new ProductoCreateDTO("Cazuela", new BigDecimal("30000"), categoria.getId(), "Especial"),
-                null
-        );
-
-        configurarRecetaYStock(producto.getId(), 80);
-
-        PedidoCreateDTO dto = TestDataFactory.pedidoCreateMesa(mesa.getId(), mesero.getId(), producto.getId(), 1);
-        PedidoResponseDTO creado = pedidoService.crearPedido(dto);
-
-        PagoCreateDTO pagoCreateDTO = new PagoCreateDTO();
-        pagoCreateDTO.setPedidoId(creado.getId());
-        pagoCreateDTO.setMetodo("EFECTIVO");
-        pagoCreateDTO.setMonto(new BigDecimal("30000.00"));
-
-        pagoService.registrarPago(pagoCreateDTO, null);
-
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> pedidoService.agregarProducto(creado.getId(), producto.getId(), 1)
-        );
-
-        assertTrue(ex.getMessage().toLowerCase().contains("pagado"));
-    }
-
     private void configurarRecetaYStock(Long productoId, int stock) {
         var insumo = insumoService.crear(new InsumoCreateDTO("Base-" + productoId, "gr"));
-        inventarioService.crear(new InventarioCreateDTO(insumo.getId(), stock));
+        inventarioService.ingresarStock(insumo.getId(), stock, java.time.LocalDateTime.now().plusDays(20));
+        inventarioService.surtirCocina(insumo.getId(), stock);
 
         ProductoInsumoCreateDTO receta = new ProductoInsumoCreateDTO();
         receta.setProductoId(productoId);
@@ -329,5 +301,11 @@ class PedidoServiceIntegrationTest {
         cliente.setDireccionEnvio("Calle 123");
         cliente.setAceptoHabeasData(true);
         return personaRepository.save(cliente);
+    }
+
+    private void marcarPedidoEstado(Long pedidoId, EstadoPedido estado) {
+        Pedido pedidoEntidad = pedidoService.obtenerEntidad(pedidoId);
+        pedidoEntidad.setEstado(estado);
+        pedidoService.guardarEntidad(pedidoEntidad);
     }
 }

@@ -17,6 +17,8 @@ public interface MesaService {
 
     MesaResponseDTO cerrarMesa(Long mesaId);
 
+    MesaResponseDTO obtenerPorId(Long id);
+
     MesaResponseDTO cancelarMesa(Long mesaId);
 
     void eliminarMesa(Long mesaId);

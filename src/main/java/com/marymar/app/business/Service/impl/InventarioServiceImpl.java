@@ -410,7 +410,7 @@ public class InventarioServiceImpl implements InventarioService {
                 loteCocina.setInsumo(lote.getInsumo());
                 loteCocina.setCantidadInicial(aMover);
                 loteCocina.setCantidadDisponible(aMover);
-                loteCocina.setFechaIngreso(LocalDateTime.now()); // 👈 importante
+                loteCocina.setFechaIngreso(LocalDateTime.now());
                 loteCocina.setFechaVencimiento(lote.getFechaVencimiento());
                 loteCocina.setUbicacion(UbicacionInventario.COCINA);
                 loteCocina.setEstado(EstadoLote.ACTIVO);
@@ -421,7 +421,7 @@ public class InventarioServiceImpl implements InventarioService {
         }
 
         if (restante > 0) {
-            throw new IllegalArgumentException("No hay suficiente en bodega para surtir cocina");
+            throw new IllegalArgumentException("No hay suficiente stock en bodega para surtir cocina");
         }
     }
 
