@@ -10,6 +10,8 @@ public class DetallePedidoResponseDTO {
     private BigDecimal precioUnitario;
     private BigDecimal subtotal;
     private Long productoId;
+    private String nombrePersona;
+    private String observacion;
 
     public DetallePedidoResponseDTO() {}
 
@@ -18,13 +20,17 @@ public class DetallePedidoResponseDTO {
                                     Integer cantidad,
                                     BigDecimal precioUnitario,
                                     BigDecimal subtotal,
-                                    Long productoId) {
+                                    Long productoId,
+                                    String nombrePersona,
+                                    String observacion) {
         this.id = id;
         this.productoNombre = productoNombre;
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;
         this.subtotal = subtotal;
         this.productoId = productoId;
+        this.nombrePersona = nombrePersona;
+        this.observacion = observacion;
     }
 
     public Long getId() {
@@ -51,27 +57,43 @@ public class DetallePedidoResponseDTO {
         return productoId;
     }
 
-    public void setProductoId(Long productoId) {
-        this.productoId = productoId;
+    public String getNombrePersona() {
+        return nombrePersona;
     }
 
-    public void setCantidad(Integer cantidad) {
-        this.cantidad = cantidad;
+    public String getObservacion() {
+        return observacion;
     }
 
     public void setId(Long id) {
         this.id = id;
     }
 
-    public void setPrecioUnitario(BigDecimal precioUnitario) {
-        this.precioUnitario = precioUnitario;
-    }
-
     public void setProductoNombre(String productoNombre) {
         this.productoNombre = productoNombre;
     }
 
+    public void setCantidad(Integer cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public void setPrecioUnitario(BigDecimal precioUnitario) {
+        this.precioUnitario = precioUnitario;
+    }
+
     public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
+    }
+
+    public void setProductoId(Long productoId) {
+        this.productoId = productoId;
+    }
+
+    public void setNombrePersona(String nombrePersona) {
+        this.nombrePersona = nombrePersona;
+    }
+
+    public void setObservacion(String observacion) {
+        this.observacion = observacion;
     }
 }

@@ -4,6 +4,7 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
+import com.marymar.app.business.DTO.AgregarProductoRequestDTO;
 import com.marymar.app.business.DTO.DetallePedidoResponseDTO;
 import com.marymar.app.business.DTO.PedidoCreateDTO;
 import com.marymar.app.business.DTO.PedidoResponseDTO;
@@ -220,5 +221,33 @@ public class PedidoController {
     @PreAuthorize("hasAnyRole('COCINERO','MESERO','ADMINISTRADOR')")
     public List<PedidoResponseDTO> obtenerCola(@PathVariable String estado) {
         return pedidoService.obtenerColaCocina(estado);
+    }
+
+    @PreAuthorize("hasRole('MESERO')")
+    @PostMapping("/{id}/agregar-producto-detalle")
+    public ResponseEntity<PedidoResponseDTO> agregarProductoDetalle(
+            @PathVariable Long id,
+            @RequestBody AgregarProductoRequestDTO request) {
+
+        return ResponseEntity.ok(
+                pedidoService.agregarProductoConDetalle(
+                        id,
+                        request.getProductoId(),
+                        request.getCantidad(),
+                        request.getNombrePersona(),
+                        request.getObservacion()
+                )
+        );
+    }
+
+    @PreAuthorize("hasRole('MESERO')")
+    @PutMapping("/{pedidoId}/detalle/{detalleId}/disminuir")
+    public ResponseEntity<PedidoResponseDTO> disminuirDetalle(
+            @PathVariable Long pedidoId,
+            @PathVariable Long detalleId) {
+
+        return ResponseEntity.ok(
+                pedidoService.disminuirDetalle(pedidoId, detalleId)
+        );
     }
 }

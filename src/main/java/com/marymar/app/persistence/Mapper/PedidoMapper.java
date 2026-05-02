@@ -88,7 +88,9 @@ public class PedidoMapper {
                 detalle.getCantidad(),
                 detalle.getPrecioUnitario(),
                 detalle.getSubtotal(),
-                detalle.getProducto().getId()
+                detalle.getProducto().getId(),
+                detalle.getNombrePersona(),
+                detalle.getObservacion()
         );
     }
 }

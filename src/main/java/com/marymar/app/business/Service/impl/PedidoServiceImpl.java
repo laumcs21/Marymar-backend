@@ -194,8 +194,10 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         DetallePedido detalleExistente = pedido.getDetalles().stream()
-                .filter(d -> d.getProducto().getId().equals(productoId))
-                .findFirst()
+                .filter(d ->
+                        d.getProducto().getId().equals(productoId) &&
+                                (d.getNombrePersona() == null || d.getNombrePersona().isBlank())
+                )                .findFirst()
                 .orElse(null);
 
         int cantidadTotal = cantidad + (detalleExistente != null ? detalleExistente.getCantidad() : 0);
@@ -424,5 +426,93 @@ public class PedidoServiceImpl implements PedidoService {
             mesa.setMeseroAsignado(null);
             mesaDAO.actualizar(mesa);
         }
+    }
+
+    @Override
+    public PedidoResponseDTO agregarProductoConDetalle(
+            Long pedidoId,
+            Long productoId,
+            int cantidad,
+            String nombrePersona,
+            String observacion
+    ) {
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
+        }
+
+        if (nombrePersona == null || nombrePersona.isBlank()) {
+            throw new IllegalArgumentException("El nombre de la persona es obligatorio");
+        }
+
+        Pedido pedido = pedidoDAO.obtenerEntidadPorId(pedidoId);
+        validarPedidoModificable(pedido);
+
+        Producto producto = productoRepository.findById(productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        if (!producto.isActivo()) {
+            throw new IllegalArgumentException("El producto seleccionado no está disponible");
+        }
+
+        int cantidadActualProducto = pedido.getDetalles().stream()
+                .filter(d -> d.getProducto().getId().equals(productoId))
+                .mapToInt(DetallePedido::getCantidad)
+                .sum();
+
+        int cantidadTotal = cantidadActualProducto + cantidad;
+
+        inventarioService.validarStockProductoPedido(productoId, cantidadTotal);
+
+        DetallePedido detalle = new DetallePedido(producto, cantidad, nombrePersona, observacion);
+
+        pedido.agregarDetalle(detalle);
+
+        pedido.calcularTotal();
+
+        auditoriaService.registrar(
+                "AGREGAR_PRODUCTO_PERSONA",
+                "PEDIDO",
+                pedido.getId(),
+                "Producto: " + producto.getNombre() +
+                        " | Persona: " + nombrePersona +
+                        " | Cantidad: " + cantidad,
+                null
+        );
+
+        return pedidoDAO.actualizar(pedido);
+    }
+
+    @Override
+    public PedidoResponseDTO disminuirDetalle(Long pedidoId, Long detalleId) {
+
+        Pedido pedido = pedidoDAO.obtenerEntidadPorId(pedidoId);
+        validarPedidoModificable(pedido);
+
+        DetallePedido detalle = pedido.getDetalles().stream()
+                .filter(d -> d.getId().equals(detalleId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Detalle no encontrado"));
+
+        int nuevaCantidad = detalle.getCantidad() - 1;
+
+        if (nuevaCantidad <= 0) {
+            pedido.getDetalles().remove(detalle);
+            detallePedidoRepository.delete(detalle);
+        } else {
+            detalle.setCantidad(nuevaCantidad);
+        }
+
+        pedido.calcularTotal();
+
+        auditoriaService.registrar(
+                "DISMINUIR_DETALLE",
+                "PEDIDO",
+                pedido.getId(),
+                "Detalle reducido: " + detalle.getProducto().getNombre() +
+                        " | Persona: " + detalle.getNombrePersona(),
+                null
+        );
+
+        return pedidoDAO.actualizar(pedido);
     }
 }

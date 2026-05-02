@@ -81,7 +81,8 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:4200",
-                "https://d3hmyhthxmr5gy.cloudfront.net"
+                "https://d3hmyhthxmr5gy.cloudfront.net",
+                "https://delightful-water-09758aa10.7.azurestaticapps.net"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

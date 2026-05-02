@@ -3,6 +3,7 @@ package com.marymar.app.UnitTest;
 import com.marymar.app.TestSupport.TestDataFactory;
 import com.marymar.app.business.DTO.*;
 import com.marymar.app.business.DTO.Auth.AuthResponseDTO;
+import com.marymar.app.business.Exception.CredencialesInvalidasException;
 import com.marymar.app.business.Service.AuditoriaService;
 import com.marymar.app.business.Service.AuthService;
 import com.marymar.app.business.Service.PasswordRecoveryService;
@@ -110,8 +111,8 @@ class AuthControllerUnitTest {
         LoginRequestDTO dto = TestDataFactory.loginRequest();
         when(httpServletRequest.getHeader("User-Agent")).thenReturn("JUnit");
         when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("10.0.0.1");
-        when(authService.login(dto, "JUnit", "10.0.0.1"))
-                .thenThrow(new RuntimeException("Credenciales inválidas"));
+        when(authService.login(any(), any(), any()))
+                .thenThrow(new CredencialesInvalidasException("Credenciales inválidas"));
 
         ResponseEntity<?> resultado = controller.login(dto, httpServletRequest);
 
@@ -124,9 +125,8 @@ class AuthControllerUnitTest {
         GoogleMobileLoginRequestDTO dto = new GoogleMobileLoginRequestDTO("idToken", "captcha", "GOOGLE_LOGIN");
         when(httpServletRequest.getHeader("User-Agent")).thenReturn("Android");
         when(httpServletRequest.getRemoteAddr()).thenReturn("10.2.2.2");
-        when(authService.loginWithGoogleMobile(dto, "Android", "10.2.2.2"))
-                .thenThrow(new RuntimeException("Captcha Android inválido"));
-
+        when(authService.loginWithGoogleMobile(any(), any(), any()))
+                .thenThrow(new CredencialesInvalidasException("Captcha Android inválido"));
         ResponseEntity<?> resultado = controller.loginGoogleMobile(dto, httpServletRequest);
 
         assertEquals(401, resultado.getStatusCode().value());

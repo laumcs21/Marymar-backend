@@ -36,7 +36,9 @@ public class DetallePedidoMapper {
                 detalle.getCantidad(),
                 detalle.getPrecioUnitario(),
                 detalle.getSubtotal(),
-                detalle.getProducto().getId()
+                detalle.getProducto() != null ? detalle.getProducto().getId() : null,
+                detalle.getNombrePersona(),
+                detalle.getObservacion()
         );
     }
 

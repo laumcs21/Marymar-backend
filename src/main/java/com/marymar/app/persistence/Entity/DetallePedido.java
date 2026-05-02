@@ -23,6 +23,9 @@ public class DetallePedido {
     @Column(nullable = false)
     private Integer cantidad;
 
+    private String nombrePersona;
+    private String observacion;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal precioUnitario;
 
@@ -35,6 +38,18 @@ public class DetallePedido {
         this.producto = producto;
         this.cantidad = cantidad;
         if(producto != null){
+            this.precioUnitario = producto.getPrecio();
+            this.subtotal = this.precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+        }
+    }
+
+    public DetallePedido(Producto producto, Integer cantidad, String nombrePersona, String observacion) {
+        this.producto = producto;
+        this.cantidad = cantidad;
+        this.nombrePersona = nombrePersona;
+        this.observacion = observacion;
+
+        if (producto != null) {
             this.precioUnitario = producto.getPrecio();
             this.subtotal = this.precioUnitario.multiply(BigDecimal.valueOf(cantidad));
         }
@@ -71,6 +86,22 @@ public class DetallePedido {
 
     public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
+    }
+
+    public String getNombrePersona() {
+        return nombrePersona;
+    }
+
+    public void setNombrePersona(String nombrePersona) {
+        this.nombrePersona = nombrePersona;
+    }
+
+    public String getObservacion() {
+        return observacion;
+    }
+
+    public void setObservacion(String observacion) {
+        this.observacion = observacion;
     }
 }
 

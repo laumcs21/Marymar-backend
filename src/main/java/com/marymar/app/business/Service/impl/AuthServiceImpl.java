@@ -231,7 +231,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         if (!captchaValido) {
-            throw new IllegalArgumentException("Captcha Android inválido");
+            throw new CredencialesInvalidasException("Captcha Android inválido");
         }
 
         if (request.getIdToken() == null || request.getIdToken().isBlank()) {
@@ -315,7 +315,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!valido) {
-            throw new IllegalArgumentException("Captcha inválido");
+            throw new CredencialesInvalidasException("Captcha inválido");
         }
     }
 

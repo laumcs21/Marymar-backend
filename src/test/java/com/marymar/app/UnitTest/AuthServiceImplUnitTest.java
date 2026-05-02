@@ -208,7 +208,7 @@ class AuthServiceImplUnitTest {
         when(androidRecaptchaService.validarCaptchaAndroid("captcha-ok", "LOGIN", "Android", "1.1.1.1"))
                 .thenReturn(false);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        CredencialesInvalidasException ex = assertThrows(CredencialesInvalidasException.class,
                 () -> authService.login(loginRequest, "Android", "1.1.1.1"));
 
         assertEquals("Captcha inválido", ex.getMessage());

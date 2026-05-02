@@ -41,4 +41,14 @@ public interface PedidoService {
     List<PedidoResponseDTO> filtrar(String fechaInicio, String fechaFin, String estado);
 
     List<PedidoResponseDTO> obtenerColaCocina(String estado);
+
+    PedidoResponseDTO agregarProductoConDetalle(
+            Long pedidoId,
+            Long productoId,
+            int cantidad,
+            String nombrePersona,
+            String observacion
+    );
+
+    PedidoResponseDTO disminuirDetalle(Long pedidoId, Long detalleId);
 }

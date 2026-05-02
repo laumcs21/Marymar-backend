@@ -98,6 +98,10 @@ public class AuthController {
             );
             return ResponseEntity.ok(response);
 
+        } catch (CredencialesInvalidasException e) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", e.getMessage()));
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", e.getMessage()));
